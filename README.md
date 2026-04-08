@@ -1,2 +1,3 @@
 # Signetix
-A Cross Platform Mobile Application with Real Time ASL Gesture Recognition.
+
+A Web Based Application with Real Time PSL Gesture Recognition Engine.
