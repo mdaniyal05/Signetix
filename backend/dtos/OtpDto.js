@@ -4,4 +4,5 @@ class OtpDto {
     this.otpCode = otpCode;
   }
 }
+
 module.exports = OtpDto;
