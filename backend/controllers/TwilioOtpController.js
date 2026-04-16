@@ -40,9 +40,11 @@ class TwilioOtpController {
           channel: ControllerConstants.TWILIO_VERIFY_CHANNEL,
           to: phoneNumber,
         });
+
       LoggerFactory.getApplicationLogger.info(
         `OTP info: ${JSON.stringify({ valid: signetixOtp.valid, status: signetixOtp.status })}`
       );
+
       response.json({ valid: signetixOtp.valid, status: signetixOtp.status });
     } catch (exception) {
       response.status(500).json({ error: exception.message });
@@ -55,12 +57,14 @@ class TwilioOtpController {
         request.body?.phoneNumber,
         request.body?.otpCode
       );
+
       const otpCodeValidation = await ExceptionHelper.validate(
         otpDto.otpCode,
         400,
         `otpCode from the body is missing.`,
         response
       );
+
       if (otpCodeValidation) return otpCodeValidation;
       const phoneNumberValidation = await ExceptionHelper.validate(
         otpDto.phoneNumber,
@@ -68,21 +72,27 @@ class TwilioOtpController {
         `phoneNumber from the body is missing.`,
         response
       );
+
       if (phoneNumberValidation) return phoneNumberValidation;
+
       const user =
         await ServiceFactory.getUserService.getDocumentByCustomFilters({
           phoneNumber: otpDto.phoneNumber,
         });
+
       const userValidation = await ExceptionHelper.validate(
         user,
         400,
         `User does not exist in the database`,
         response
       );
+
       if (userValidation) return userValidation;
+
       LoggerFactory.getApplicationLogger.info(
         `OtpDto : ${JSON.stringify(otpDto)}`
       );
+
       const verifyOtpCode = await ManagerFactory.getTwilioManager()
         .getTwilioClient.verify.v2.services(
           ManagerFactory.getTwilioManager().getTwilioVerifyServiceDto.serviceSid
@@ -91,9 +101,11 @@ class TwilioOtpController {
           code: otpDto.otpCode,
           to: otpDto.phoneNumber,
         });
+
       LoggerFactory.getApplicationLogger.info(
         `OTP status: ${JSON.stringify({ valid: verifyOtpCode.valid, status: verifyOtpCode.status })}`
       );
+
       if (!verifyOtpCode.valid) {
         const signetixException = new SignetixException(
           400,

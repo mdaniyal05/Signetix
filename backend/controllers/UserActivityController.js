@@ -8,6 +8,7 @@ class UserActivityController {
     try {
       const userActivities =
         await ServiceFactory.getUserActivityService.getDocuments();
+
       response.json(userActivities);
     } catch (exception) {
       response.status(500).json({ error: exception.message });
@@ -18,10 +19,12 @@ class UserActivityController {
   getUserActivityById = async (request, response) => {
     try {
       const userActivityId = request.params.id;
+
       const userActivity =
         await ServiceFactory.getUserActivityService.getDocumentById(
           userActivityId
         );
+
       response.json(userActivity);
     } catch (exception) {
       response.status(500).json({ error: exception.message });
