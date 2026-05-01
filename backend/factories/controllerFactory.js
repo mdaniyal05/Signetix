@@ -4,10 +4,16 @@
  */
 
 //controllers
+const ChatController = require("../controllers/ChatController.js");
+const MessageController = require("../controllers/MessageController.js");
 const UserController = require("../controllers/UserController.js");
+const ContactController = require("../controllers/ContactController.js");
 const UserActivityController = require("../controllers/UserActivityController.js");
+const CallHistoryController = require("../controllers/CallHistoryController.js");
+const SettingsController = require("../controllers/SettingsController.js");
 const UserAuthenticationController = require("../controllers/UserAuthenticationController.js");
 const TwilioOtpController = require("../controllers/TwilioOtpController.js");
+const AmazonS3Controller = require("../controllers/AmazonS3Controller.js");
 const JwtController = require("../controllers/JwtController.js");
 
 class ControllerFactory {
@@ -16,12 +22,41 @@ class ControllerFactory {
    * @type {UserController | null}
    */
   static #userController = null;
+  /**
+   * @private
+   * @type {ChatController | null}
+   */
+  static #chatController = null;
+
+  /**
+   * @private
+   * @type {MessageController | null}
+   */
+  static #messageController = null;
+
+  /**
+   * @private
+   * @type {ContactController | null}
+   */
+  static #contactController = null;
 
   /**
    * @private
    * @type {UserActivityController | null}
    */
   static #userActivityController = null;
+
+  /**
+   * @private
+   * @type {CallHistoryController | null}
+   */
+  static #callHistoryController = null;
+
+  /**
+   * @private
+   * @type {SettingsController | null}
+   */
+  static #settingsController = null;
 
   /**
    * @private
@@ -34,6 +69,12 @@ class ControllerFactory {
    * @type {TwilioOtpController | null}
    */
   static #twilioOtpController = null;
+
+  /**
+   * @private
+   * @type {AmazonS3Controller | null}
+   */
+  static #amazonS3Controller = null;
 
   /**
    * @private
@@ -50,11 +91,46 @@ class ControllerFactory {
     return ControllerFactory.#userController;
   }
 
+  static getChatController() {
+    if (!ControllerFactory.#chatController) {
+      ControllerFactory.#chatController = new ChatController();
+    }
+    return ControllerFactory.#chatController;
+  }
+
+  static getMessageController() {
+    if (!ControllerFactory.#messageController) {
+      ControllerFactory.#messageController = new MessageController();
+    }
+    return ControllerFactory.#messageController;
+  }
+
+  static getContactController() {
+    if (!ControllerFactory.#contactController) {
+      ControllerFactory.#contactController = new ContactController();
+    }
+    return ControllerFactory.#contactController;
+  }
+
   static getUserActivitiyController() {
     if (!ControllerFactory.#userActivityController) {
       ControllerFactory.#userActivityController = new UserActivityController();
     }
     return ControllerFactory.#userActivityController;
+  }
+
+  static getCallHistoryController() {
+    if (!ControllerFactory.#callHistoryController) {
+      ControllerFactory.#callHistoryController = new CallHistoryController();
+    }
+    return ControllerFactory.#callHistoryController;
+  }
+
+  static getSettingsController() {
+    if (!ControllerFactory.#settingsController) {
+      ControllerFactory.#settingsController = new SettingsController();
+    }
+    return ControllerFactory.#settingsController;
   }
 
   static getUserAuthenticationController() {
@@ -70,6 +146,13 @@ class ControllerFactory {
       ControllerFactory.#twilioOtpController = new TwilioOtpController();
     }
     return ControllerFactory.#twilioOtpController;
+  }
+
+  static getAmazonS3Controller() {
+    if (!ControllerFactory.#amazonS3Controller) {
+      ControllerFactory.#amazonS3Controller = new AmazonS3Controller();
+    }
+    return ControllerFactory.#amazonS3Controller;
   }
 
   static getJwtController() {
