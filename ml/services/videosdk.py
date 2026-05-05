@@ -234,7 +234,7 @@ class VideoProcessor:
                         if new_interval != self.frame_interval:
                             self.frame_interval = new_interval
                             print(
-                                f"⚠️ Reducing frame rate due to performance issues. New interval: {self.frame_interval:.4f}s")
+                                f"Reducing frame rate due to performance issues. New interval: {self.frame_interval:.4f}s")
                     elif drop_rate < 0.05 and avg_interval < self.frame_interval * 0.7:
                         # Good performance - can increase frame rate
                         new_interval = max(
@@ -242,15 +242,15 @@ class VideoProcessor:
                         if new_interval != self.frame_interval:
                             self.frame_interval = new_interval
                             print(
-                                f"✅ Increasing frame rate due to good performance. New interval: {self.frame_interval:.4f}s")
+                                f"Increasing frame rate due to good performance. New interval: {self.frame_interval:.4f}s")
                     # Mark device speed as assessed
                     if not self.device_speed_assessed:
                         if drop_rate < 0.1:
                             print(
-                                f"📱 Device performance assessment: Good (drop rate: {drop_rate:.2f})")
+                                f"Device performance assessment: Good (drop rate: {drop_rate:.2f})")
                         else:
                             print(
-                                f"📱 Device performance assessment: Limited (drop rate: {drop_rate:.2f})")
+                                f"Device performance assessment: Limited (drop rate: {drop_rate:.2f})")
                         self.device_speed_assessed = True
                     # Reset counters periodically
                     self.dropped_frames = 0
