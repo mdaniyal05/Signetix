@@ -1,0 +1,315 @@
+const ServiceFactory = require("../factories/serviceFactory.js");
+const ExceptionHelper = require("../exception/ExceptionHelper.js");
+const SignetixException = require("../exception/SignetixException.js");
+const LoggerFactory = require("../factories/loggerFactory.js");
+const UpdateSettingsDto = require("../dtos/UpdateSettingsDto.js");
+const SignetixResultDto = require("../dtos/SignetixResultDto.js");
+const ControllerConstants = require("../constants/controllerConstants.js");
+
+class SettingsController {
+  constructor() {}
+
+  //Get single Settings
+  getSettingsById = async (request, response) => {
+    var mongooseSession = null;
+
+    try {
+      mongooseSession =
+        await ServiceFactory.getMongooseService.getMongooseSession();
+
+      await ServiceFactory.getMongooseService.startMongooseTransaction(
+        mongooseSession
+      );
+
+      const settingsIdValidation = await ExceptionHelper.validate(
+        request.params.id,
+        400,
+        `settingsId is not provided.`
+      );
+
+      if (settingsIdValidation)
+        return new SignetixResultDto(null, userIdValidation);
+
+      const settingsId = request.params.id;
+
+      LoggerFactory.getApplicationLogger.info(
+        `Get settings by the id: ${settingsId}!`
+      );
+
+      const settings = await ServiceFactory.getSettingsService.getDocumentById(
+        settingsId,
+        mongooseSession
+      );
+
+      response.json(await this.#updateEnumValue(settings));
+    } catch (exception) {
+      const signetixException = new SignetixException(
+        500,
+        `Exception Occured: ${exception.message}`
+      );
+
+      return response
+        .status(signetixException.status)
+        .json(signetixException.loadResult());
+    }
+  };
+
+  //get Settings by Phone Number
+  getSettingsByPhoneNumber = async (request, response) => {
+    var mongooseSession = null;
+
+    try {
+      mongooseSession =
+        await ServiceFactory.getMongooseService.getMongooseSession();
+      await ServiceFactory.getMongooseService.startMongooseTransaction(
+        mongooseSession
+      );
+
+      const phoneNumberValidation = await ExceptionHelper.validate(
+        request.params.phoneNumber,
+        400,
+        `phoneNumber is not provided.`,
+        response
+      );
+
+      if (phoneNumberValidation) return phoneNumberValidation;
+
+      const userPhoneNumber = request.params.phoneNumber;
+      LoggerFactory.getApplicationLogger.info(
+        `Getting settings by the phoneNumber: ${userPhoneNumber}!`
+      );
+
+      const userObject =
+        await ServiceFactory.getUserService.getDocumentByCustomFilters({
+          phoneNumber: request.params.phoneNumber,
+        });
+
+      const userObjectValidation = await ExceptionHelper.validate(
+        userObject,
+        400,
+        `No such user exists with the phoneNumber: ${userPhoneNumber}`,
+        response
+      );
+
+      if (userObjectValidation) return userObjectValidation;
+
+      //since we are using find in the service, it always returns a moongose query which resolves into an array of mongoose documents, so never null!!
+      //and we can safely use populate on it
+      const settingsQuery =
+        ServiceFactory.getSettingsService.getDocumentsByCustomFiltersQuery(
+          { userId: userObject._id.toString() },
+          mongooseSession
+        );
+
+      const settingsData = await settingsQuery
+        .populate({
+          path: "userId",
+          select: "name phoneNumber",
+        })
+        .lean();
+
+      response.json(await this.#preprocessSettingsData(settingsData));
+    } catch (exception) {
+      const signetixException = new SignetixException(
+        500,
+        `Exception Occured: ${exception.message}`
+      );
+
+      return response
+        .status(signetixException.status)
+        .json(signetixException.loadResult());
+    }
+  };
+
+  //create default accessibility settings
+  createDefaultAccessibilitySettings = async (request, response) => {
+    const defaultAccessibilitySettings = await this.createSettings(
+      request.body.userId
+    );
+
+    if (defaultAccessibilitySettings.exception) {
+      return response
+        .status(defaultAccessibilitySettings.exception.status)
+        .json(defaultAccessibilitySettings.exception);
+    }
+
+    response.json(defaultAccessibilitySettings.data);
+  };
+
+  //continue working on this
+  updateAccessibilitySettings = async (request, response) => {
+    var mongooseSession = null;
+
+    try {
+      mongooseSession =
+        await ServiceFactory.getMongooseService.getMongooseSession();
+      await ServiceFactory.getMongooseService.startMongooseTransaction(
+        mongooseSession
+      );
+
+      const phoneNumberValidation = await ExceptionHelper.validate(
+        request.body.phoneNumber,
+        400,
+        `phoneNumber is not provided.`,
+        response
+      );
+
+      if (phoneNumberValidation) return phoneNumberValidation;
+
+      const userObject =
+        await ServiceFactory.getUserService.getDocumentByCustomFilters({
+          phoneNumber: request.body.phoneNumber,
+        });
+
+      const userObjectValidation = await ExceptionHelper.validate(
+        userObject,
+        400,
+        `No such user exists with the phoneNumber: ${request.body.phoneNumber}`,
+        response
+      );
+
+      if (userObjectValidation) return userObjectValidation;
+
+      const updateSettingsDto = new UpdateSettingsDto(
+        userObject._id.toString(),
+        request.body?.theme,
+        request.body?.autoDownload,
+        request.body?.notificationEnabled,
+        request.body?.pslTranslationLanguage
+      );
+
+      const existingAccessibilitySettingsObject =
+        await ServiceFactory.getSettingsService.getDocumentByCustomFilters({
+          userId: updateSettingsDto.userId,
+        });
+
+      const accessibilitySettingsObjectValidation =
+        await ExceptionHelper.validate(
+          existingAccessibilitySettingsObject,
+          400,
+          `No such accessibilitySettings record exists for the user: ${request.body.phoneNumber}`,
+          response
+        );
+
+      if (accessibilitySettingsObjectValidation)
+        return accessibilitySettingsObjectValidation;
+
+      const updatedAccessibilitySettings =
+        await ServiceFactory.getSettingsService.updateDocument(
+          {
+            userId: updateSettingsDto.userId,
+          },
+          {
+            theme:
+              updateSettingsDto.theme == null
+                ? existingAccessibilitySettingsObject.theme
+                : updateSettingsDto.theme,
+            autoDownload:
+              updateSettingsDto.autoDownload == null
+                ? existingAccessibilitySettingsObject.autoDownload
+                : updateSettingsDto.autoDownload,
+            notificationEnabled:
+              updateSettingsDto.notificationEnabled == null
+                ? existingAccessibilitySettingsObject.notificationEnabled
+                : updateSettingsDto.notificationEnabled,
+            pslTranslationLanguage:
+              updateSettingsDto.pslTranslationLanguage == null
+                ? existingAccessibilitySettingsObject.pslTranslationLanguage
+                : ControllerConstants
+                    .ACCESSIBILITY_SETTINGS_PSL_TRANSLATE_DICT_REVERSE[
+                    updateSettingsDto.pslTranslationLanguage
+                  ],
+            notificationEnabled: updateSettingsDto.notificationEnabled,
+            updatedAt: Date.now(),
+          },
+          mongooseSession
+        );
+
+      await ServiceFactory.getMongooseService.commitMongooseTransaction(
+        mongooseSession
+      );
+
+      response.json(updatedAccessibilitySettings);
+    } catch (exception) {
+      await ServiceFactory.getMongooseService.abandonMongooseTransaction(
+        mongooseSession
+      );
+
+      const signetixException = new SignetixException(
+        500,
+        `Exception Occured: ${exception.message}`
+      );
+
+      return response
+        .status(signetixException.status)
+        .json(signetixException.loadResult());
+    }
+  };
+
+  async createSettings(userId) {
+    var mongooseSession = null;
+
+    try {
+      mongooseSession =
+        await ServiceFactory.getMongooseService.getMongooseSession();
+      await ServiceFactory.getMongooseService.startMongooseTransaction(
+        mongooseSession
+      );
+
+      LoggerFactory.getApplicationLogger.info(
+        `Creating accessibility settings...`
+      );
+
+      const userIdValidation = await ExceptionHelper.validate(
+        userId,
+        400,
+        `userId is not provided.`
+      );
+
+      if (userIdValidation)
+        return new SignetixResultDto(null, userIdValidation);
+
+      const defaultAccessibilitySettings =
+        await ServiceFactory.getSettingsService.saveDocument(
+          { userId: userId },
+          mongooseSession
+        );
+
+      await ServiceFactory.getMongooseService.commitMongooseTransaction(
+        mongooseSession
+      );
+
+      return new SignetixResultDto(defaultAccessibilitySettings);
+    } catch (exception) {
+      await ServiceFactory.getMongooseService.abandonMongooseTransaction(
+        mongooseSession
+      );
+
+      const signetixException = new SignetixException(
+        500,
+        `Exception Occured: ${exception.message}`
+      );
+
+      return new SignetixResultDto(null, signetixException);
+    }
+  }
+
+  async #preprocessSettingsData(settingsData) {
+    settingsData.forEach((data) => {
+      this.#updateEnumValue(data);
+    });
+
+    return settingsData;
+  }
+
+  async #updateEnumValue(data) {
+    data[ControllerConstants.PSL_TRANSLATION_LANGUAGE_KEY] =
+      ControllerConstants.ACCESSIBILITY_SETTINGS_PSL_TRANSLATE_DICT[
+        data[ControllerConstants.PSL_TRANSLATION_LANGUAGE_KEY]
+      ];
+
+    return data;
+  }
+}
+
+module.exports = SettingsController;
