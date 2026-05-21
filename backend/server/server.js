@@ -4,10 +4,15 @@ require("reflect-metadata");
 const express = require("express");
 const http = require("http");
 
+const WebSocketManager = require("../managers/websocketManager.js");
 const EventFactory = require("../factories/eventFactory.js");
 const ManagerFactory = require("../factories/managerFactory.js");
+const MessageEvent = require("../events/services/messageEvent.js");
+const AccessibilitySettingsEvent = require("../events/services/accessibilitySettingsEvent.js");
 const UserAuthenticationEvent = require("../events/services/userAuthenticationEvent.js");
 const UserEvent = require("../events/services/userEvent.js");
+const ChatEvent = require("../events/services/chatEvent.js");
+const CallLogEvent = require("../events/services/callLogEvent.js");
 const ServiceFactory = require("../factories/serviceFactory.js");
 const CommonUtils = require("../utilities/commonUtils.js");
 const ServerConstants = require("../constants/serverConstants.js");
@@ -18,8 +23,14 @@ const AuthMiddleWare = require("../middlewares/authMiddleWare.js");
 //routes
 const userRoutes = require("../routes/UserRoutes.js");
 const homeRoutes = require("../routes/HomeRoute.js");
+const contactRoutes = require("../routes/ContactRoutes.js");
+const chatRoutes = require("../routes/ChatRoutes.js");
+const messageRoutes = require("../routes/MessageRoutes.js");
+const callHistoryRoutes = require("../routes/CallHistoryRoutes.js");
+const settingsRoutes = require("../routes/SettingsRoutes.js");
 const userAuthenticationRoutes = require("../routes/UserAuthenticationRoutes.js");
 const twilioOtpRoutes = require("../routes/TwilioVerifyRoutes.js");
+const amazonS3Routes = require("../routes/AmazonS3Routes.js");
 const jwtRoutes = require("../routes/JwtRoutes.js");
 const authRoutes = require("../routes/AuthRoutes.js");
 
@@ -47,18 +58,38 @@ mainServer.listen(port, async () => {
   LoggerFactory.getApplicationLogger.info(
     `Signetix Server is Up & Running on ${process.env.PRODUCTION_URL}:${port}`
   );
+
+  const websocketManager = new WebSocketManager(mainServer);
 });
 
 async function setupManagers() {
   try {
+    //initialize RabbitMQ
+    await ManagerFactory.getRabbitMqQueueManager().establishConnection();
+    //setup message event
+    EventFactory.setMessageEvent = new MessageEvent();
+    EventFactory.setAccessibilitySettingsEvent =
+      new AccessibilitySettingsEvent();
     EventFactory.setUserEvent = new UserEvent();
     EventFactory.setUserAuthenticationEvent = new UserAuthenticationEvent();
+    EventFactory.setCallLogEvent = new CallLogEvent();
+    EventFactory.setChatEvet = new ChatEvent();
+    //setup processors, if any
+    await ManagerFactory.getRabbitMqProcessorManager().executeMessageProcessor(
+      ManagerFactory.getRabbitMqQueueManager().getRabbitMqChannel()
+    );
+
+    //setup Amazon S3 Manager
+    //dont await, let it run on a separate thread
+    //as it wont be needed immediately
+    await ManagerFactory.getAwsS3Manager().initiateS3Connection();
     //Twilio OTP/Verify
     await setupTwilio();
     //Jwt Manager
     await setupJwtManager();
   } catch (exception) {
     LoggerFactory.getApplicationLogger.error(`Exception Occured ${exception}`);
+
     throw new Error(exception);
   }
 }
@@ -66,7 +97,6 @@ async function setupManagers() {
 function setupRoutes() {
   try {
     const SignetixApp = express();
-
     SignetixApp.use(express.json());
 
     //auth middleware
@@ -78,8 +108,14 @@ function setupRoutes() {
 
     SignetixApp.use("/", homeRoutes);
     SignetixApp.use("/users", userRoutes);
+    SignetixApp.use("/contacts", contactRoutes);
+    SignetixApp.use("/chats", chatRoutes);
+    SignetixApp.use("/messages", messageRoutes);
+    SignetixApp.use("/callHistory", callHistoryRoutes);
+    SignetixApp.use("/settings", settingsRoutes);
     SignetixApp.use("/userAuthentication", userAuthenticationRoutes);
     SignetixApp.use("/twilio", twilioOtpRoutes);
+    SignetixApp.use("/amazon", amazonS3Routes);
     SignetixApp.use("/jwt", jwtRoutes);
     SignetixApp.use("/auth", authRoutes);
 
