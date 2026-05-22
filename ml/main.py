@@ -37,18 +37,15 @@ inference_service = KerasInferenceService()
 videosdk_service = VideoSDKService()
 
 # Models for API requests
-
-
 class MeetingIDPayload(BaseModel):
     meetingId: str
 
 # Meeting ID endpoints
-
-
 @app.post("/meeting-id")
 async def post_meeting_id(payload: MeetingIDPayload):
     global CURRENT_MEETING_ID
     CURRENT_MEETING_ID = payload.meetingId
+    
     print(f"Received Meeting ID: {payload.meetingId}")
 
     # Notify the VideoSDK service about the new meeting ID
@@ -75,13 +72,14 @@ async def trigger_recording():
             status_code=400, detail="No active video stream available for recording.")
 
     # Create the target directory if it does not exist.
-    os.makedirs("mobile dataset", exist_ok=True)
+    os.makedirs("dataset", exist_ok=True)
     file_name = f"{CURRENT_MEETING_ID}_input.mp4"
-    file_path = os.path.join("mobile dataset", file_name)
+    file_path = os.path.join("dataset", file_name)
 
     # Pick one active video processor (e.g., the first one) and start recording.
     processor = next(iter(videosdk_service.active_processors))
     processor.start_recording(file_path, 30)  # recording for 30 seconds
+    
     return {"status": "success", "message": f"Recording started. Saving to {file_path}."}
 
 # ML Inference WebSocket endpoint
@@ -98,6 +96,7 @@ async def inference_websocket(websocket: WebSocket):
 @app.websocket("/ws/react")
 async def react_websocket(websocket: WebSocket):
     await websocket.accept()
+    
     try:
         # Register the client with the VideoSDK service
         videosdk_service.add_react_client(websocket)
@@ -137,7 +136,7 @@ if __name__ == "__main__":
 
     def wait_for_recording():
         while True:
-            input("Press Enter to start mobile video recording for 30 seconds...")
+            input("Press Enter to start video recording for 30 seconds...")
             try:
                 # Call the new endpoint to trigger recording
                 response = requests.post(

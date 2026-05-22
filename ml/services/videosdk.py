@@ -41,6 +41,7 @@ class VideoProcessor:
             'MIN_FRAME_INTERVAL', 1/45))  # Max ~45 FPS
         self.max_interval = float(os.environ.get(
             'MAX_FRAME_INTERVAL', 1/15))  # Min ~15 FPS
+
         # Will be adjusted based on observed performance
         self.device_performance_factor = 1.0
 
@@ -66,18 +67,20 @@ class VideoProcessor:
         self.recorded_timestamps = []    # List to store precise timestamps
 
     def start_recording(self, filename: str, duration: float):
-        """Start recording frames to the specified file for a given duration (in seconds)."""
+        # Start recording frames to the specified file for a given duration (in seconds).
         self.recording = True
         self.record_filename = filename
         self.record_start_time = time.time()
         self.record_duration = duration
+
         # Create a new list to store recorded frames with their timestamps
         self.recorded_frames = []
         self.recorded_timestamps = []
+
         print(f"Recording started: {filename} for {duration} seconds")
 
     def save_recording_with_ffmpeg(self):
-        """Save the recorded frames using FFmpeg to maintain variable framerate."""
+        # Save the recorded frames using FFmpeg to maintain variable framerate.
         if not self.recorded_frames:
             print("No frames to save")
             return
@@ -90,9 +93,11 @@ class VideoProcessor:
                                stdout=subprocess.PIPE,
                                stderr=subprocess.PIPE,
                                check=True)
+
                 ffmpeg_available = True
             except (subprocess.SubprocessError, FileNotFoundError):
                 print("FFmpeg command not found in PATH. Using OpenCV fallback.")
+
                 ffmpeg_available = False
 
             if ffmpeg_available:
@@ -104,6 +109,7 @@ class VideoProcessor:
 
                     with open(timestamps_file, 'w') as f:
                         for i, (frame, timestamp) in enumerate(zip(self.recorded_frames, self.recorded_timestamps)):
+
                             # Save frame as image
                             frame_path = os.path.join(
                                 temp_dir, f"frame_{i:06d}.png")
@@ -112,6 +118,7 @@ class VideoProcessor:
 
                             # Write timestamp (relative to start) for ffmpeg concat
                             f.write(f"file 'frame_{i:06d}.png'\n")
+
                             if i > 0:
                                 duration = self.recorded_timestamps[i] - \
                                     self.recorded_timestamps[i-1]
@@ -154,10 +161,12 @@ class VideoProcessor:
                         stdout=subprocess.PIPE,
                         stderr=subprocess.PIPE
                     )
+
                     stdout, stderr = process.communicate()
 
                     if process.returncode != 0:
                         print(f"FFmpeg error: {stderr.decode()}")
+
                         # Fallback to OpenCV if FFmpeg fails
                         self._save_recording_with_opencv()
                     else:
@@ -173,13 +182,14 @@ class VideoProcessor:
             self._save_recording_with_opencv()
 
     def _save_recording_with_opencv(self):
-        """Fallback method to save recording using OpenCV if FFmpeg fails."""
+        # Fallback method to save recording using OpenCV if FFmpeg fails.
         num_frames = len(self.recorded_frames)
         start_time = self.recorded_timestamps[0]
         end_time = self.recorded_timestamps[-1]
 
         # Calculate the framerate needed to make the video exactly 30 seconds
         target_duration = self.record_duration  # Should be 30 seconds
+
         # We use target_duration here rather than actual elapsed time to ensure 30-second playback
         target_fps = num_frames / target_duration
 
@@ -198,13 +208,15 @@ class VideoProcessor:
             writer.write(frame_img)
 
         writer.release()
+
         print(
             f"Fallback: Recording saved to {self.record_filename} using OpenCV at {target_fps:.2f} FPS for {target_duration}s playback")
 
     async def start(self):
-        """Initialize and start processing"""
+        # Initialize and start processing
         self.is_processing = True
         self.processing_task = asyncio.create_task(self.process_frames())
+
         # Start a separate task to periodically log FPS
         self.fps_task = asyncio.create_task(self.log_fps())
 
@@ -213,7 +225,7 @@ class VideoProcessor:
             self.adaptive_framerate_controller())
 
     async def adaptive_framerate_controller(self):
-        """Dynamically adjust frame rate based on device performance"""
+        # Dynamically adjust frame rate based on device performance
         # Wait for initial device performance assessment
         await asyncio.sleep(5.0)  # Give some time to collect performance data
         while self.is_processing:
@@ -231,18 +243,23 @@ class VideoProcessor:
                         # Too many drops or processing too slow - reduce frame rate
                         new_interval = min(
                             self.frame_interval * 1.2, self.max_interval)
+
                         if new_interval != self.frame_interval:
                             self.frame_interval = new_interval
+
                             print(
                                 f"Reducing frame rate due to performance issues. New interval: {self.frame_interval:.4f}s")
                     elif drop_rate < 0.05 and avg_interval < self.frame_interval * 0.7:
                         # Good performance - can increase frame rate
                         new_interval = max(
                             self.frame_interval * 0.9, self.min_interval)
+
                         if new_interval != self.frame_interval:
                             self.frame_interval = new_interval
+
                             print(
                                 f"Increasing frame rate due to good performance. New interval: {self.frame_interval:.4f}s")
+
                     # Mark device speed as assessed
                     if not self.device_speed_assessed:
                         if drop_rate < 0.1:
@@ -252,6 +269,7 @@ class VideoProcessor:
                             print(
                                 f"Device performance assessment: Limited (drop rate: {drop_rate:.2f})")
                         self.device_speed_assessed = True
+
                     # Reset counters periodically
                     self.dropped_frames = 0
                     self.total_frames = 0
@@ -260,9 +278,10 @@ class VideoProcessor:
             await asyncio.sleep(3.0)  # Check every 3 seconds
 
     async def log_fps(self):
-        """Periodically calculate and log average FPS"""
+        # Periodically calculate and log average FPS
         while self.is_processing:
             await asyncio.sleep(self.fps_update_interval)
+
             if len(self.frame_times) > 1:
                 # Calculate FPS based on the time between first and last frame
                 time_span = self.frame_times[-1] - self.frame_times[0]
@@ -270,35 +289,41 @@ class VideoProcessor:
 
                 if time_span > 0:
                     self.average_fps = (num_frames - 1) / time_span
+
                     print(
                         f"Average FPS: {self.average_fps:.2f}, Target interval: {self.frame_interval:.4f}s")
             elif self.frame_times:
                 print("Not enough frames to calculate FPS")
 
     async def cleanup(self):
-        """Clean up resources"""
+        # Clean up resources
         self.is_processing = False
+
         if self.processing_task:
             self.processing_task.cancel()
+
             with suppress(asyncio.CancelledError):
                 await self.processing_task
 
          # Cancel FPS logging task
         if hasattr(self, 'fps_task'):
             self.fps_task.cancel()
+
             with suppress(asyncio.CancelledError):
                 await self.fps_task
 
         # Cancel adaptive controller task
         if hasattr(self, 'adaptive_task'):
             self.adaptive_task.cancel()
+
             with suppress(asyncio.CancelledError):
                 await self.adaptive_task
 
     async def process_frames(self):
-        """Continuous frame processing loop"""
+        # Continuous frame processing loop
         while self.is_processing:
             await self.frame_ready.wait()
+
             self.frame_ready.clear()
 
             if self.current_frame is None:
@@ -318,6 +343,7 @@ class VideoProcessor:
                 _, buffer = cv2.imencode('.jpg', self.current_frame,
                                          [cv2.IMWRITE_JPEG_QUALITY, 95,
                                           cv2.IMWRITE_JPEG_OPTIMIZE, 1])
+
                 frame_data = b64encode(buffer).decode('utf-8')
 
                 # Send frame to the ML WebSocket service
@@ -343,6 +369,7 @@ class VideoProcessor:
             # Check if the recording duration has passed.
             if current_time - self.record_start_time >= self.record_duration:
                 self.recording = False
+
                 print(
                     f"Recording finished. Captured {len(self.recorded_frames)} frames over {current_time - self.record_start_time:.2f} seconds.")
 
@@ -355,6 +382,7 @@ class VideoProcessor:
 
         # Now handle the normal inference-related frame processing using rate limiting.
         current_time = time.time()
+
         if current_time - self.last_process_time >= self.frame_interval:
             try:
                 self.current_frame = current_img
@@ -370,10 +398,13 @@ class VideoProcessor:
 class ProcessedVideoTrack(CustomVideoTrack):
     def __init__(self, track, videosdk_service):
         super().__init__()
+
         self.track = track
         self.processor = VideoProcessor(videosdk_service)
+
         # Start the processor
         asyncio.create_task(self.processor.start())
+
         # NEW: Register this processor for possible recording.
         videosdk_service.active_processors.add(self.processor)
 
@@ -400,6 +431,7 @@ class SimpleParticipantHandler(ParticipantEventHandler):
         # Only process video streams
         if stream.kind == "video" and self.videosdk_service.meeting:
             print(f"Processing video stream from participant")
+
             self.videosdk_service.meeting.add_custom_video_track(
                 track=ProcessedVideoTrack(
                     track=stream.track, videosdk_service=self.videosdk_service)
@@ -422,24 +454,26 @@ class VideoSDKService:
         self.processor_task = None
 
     async def initialize_ml_client(self):
-        """Connect to ML server via FastAPI endpoint"""
+        # Connect to ML server via FastAPI endpoint
         # This will be handled by the FastAPI app
         pass
 
     def add_react_client(self, websocket: WebSocket):
-        """Add a React client WebSocket connection"""
+        # Add a React client WebSocket connection
         self.react_clients.add(websocket)
+
         print(
             f"React client connected, total clients: {len(self.react_clients)}")
 
     def remove_react_client(self, websocket: WebSocket):
-        """Remove a React client WebSocket connection"""
+        # Remove a React client WebSocket connection
         self.react_clients.discard(websocket)
+
         print(
             f"React client disconnected, remaining clients: {len(self.react_clients)}")
 
     async def broadcast_predictions(self, predictions):
-        """Broadcast predictions to all connected React clients"""
+        # Broadcast predictions to all connected React clients
         if not self.react_clients:
             return
 
@@ -457,11 +491,11 @@ class VideoSDKService:
                 self.react_clients.discard(ws)
 
     async def send_frame_to_ml(self, frame_data):
-        """Send a frame to the ML service for processing"""
+        # Send a frame to the ML service for processing
         await self.ml_queue.put(frame_data)
 
     async def handle_ml_results(self, results):
-        """Process ML inference results"""
+        # Process ML inference results
         if results.get("status") == "success":
             predictions = results.get("predictions", [])
             current_time = time.time()
@@ -469,20 +503,24 @@ class VideoSDKService:
             # Always broadcast empty predictions to clear UI
             if not predictions and self.last_predictions:
                 await self.broadcast_predictions([])
+
                 print("Broadcasting empty predictions to clear UI")
+
                 self.last_predictions = []
             # For non-empty predictions, limit broadcast rate to reduce UI lag
             elif predictions and (predictions != self.last_predictions or
                                   current_time - self.last_broadcast_time >= self.broadcast_interval):
                 self.last_predictions = predictions
                 self.last_broadcast_time = current_time
+
                 await self.broadcast_predictions(predictions)
+
                 if predictions:  # Guard against empty list
                     print(
                         f"Broadcasting prediction: {predictions[0]['gesture']} with confidence {predictions[0]['confidence']:.2f}")
 
     async def ml_processor(self):
-        """Process frames from the queue and send them to ML service"""
+        # Process frames from the queue and send them to ML service
         import aiohttp
 
         async with aiohttp.ClientSession() as session:
@@ -491,6 +529,7 @@ class VideoSDKService:
 
             async with session.ws_connect(ml_url) as ws:
                 self.ml_websocket = ws
+
                 print("Connected to ML inference service")
 
                 # Start a task to handle responses
@@ -530,7 +569,7 @@ class VideoSDKService:
                         await response_task
 
     async def update_meeting_id(self, meeting_id: str):
-        """Update the current meeting ID and join if necessary"""
+        # Update the current meeting ID and join if necessary
         if meeting_id == self.meeting_id:
             print("Meeting ID unchanged")
             return
@@ -547,6 +586,7 @@ class VideoSDKService:
 
         # Join new meeting
         self.meeting_id = meeting_id
+
         meeting_config = MeetingConfig(
             meeting_id=meeting_id,
             name='AI_MODEL',
@@ -554,13 +594,16 @@ class VideoSDKService:
             webcam_enabled=False,
             token=VIDEOSDK_TOKEN,
         )
+
         self.meeting = VideoSDK.init_meeting(**meeting_config)
         self.meeting.add_event_listener(SimpleEventHandler(self))
+
         print(f"Joining new meeting: {meeting_id}")
+
         self.meeting.join()
 
     async def start_monitoring(self):
-        """Start the VideoSDK service monitoring"""
+        # Start the VideoSDK service monitoring
         self.is_running = True
 
         # Start the ML processor task
@@ -569,12 +612,13 @@ class VideoSDKService:
         print("VideoSDK service started")
 
     async def cleanup(self):
-        """Clean up resources"""
+        # Clean up resources
         self.is_running = False
 
         # Stop any running tasks
         if self.processor_task:
             self.processor_task.cancel()
+
             with suppress(asyncio.CancelledError):
                 await self.processor_task
 
