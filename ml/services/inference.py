@@ -63,3 +63,40 @@ class KerasInferenceService:
 
         # Active clients
         self.active_clients = set()
+
+    async def initialize(self):
+        # Initialize the service, load models and resources
+        self.load_model()
+        self.load_class_names()
+
+        self.mp_hands = mp.solutions.hands
+
+        self.hands = self.mp_hands.Hands(
+            max_num_hands=2,
+            min_detection_confidence=0.5,
+            min_tracking_confidence=0.5
+        )
+
+        print("ML Inference service initialized")
+        print(f"Using sequence length: {self.sequence_length}")
+        print(f"Target FPS: {self.target_fps}")
+
+        return self
+
+    async def cleanup(self):
+        # Clean up resources
+        # Release MediaPipe resources
+        self.hands.close()
+
+        return True
+
+    def load_model(self):
+        # Load the Keras model from the specified path.
+        try:
+            self.model = tf.keras.models.load_model(self.model_path)
+
+            print(f"Loaded model from {self.model_path}")
+        except Exception as e:
+            print(f"Failed to load model from {self.model_path}: {e}")
+
+            raise
