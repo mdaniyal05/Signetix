@@ -100,3 +100,31 @@ class KerasInferenceService:
             print(f"Failed to load model from {self.model_path}: {e}")
 
             raise
+
+    def load_class_names(self):
+        # Load class names from a file or environment variable.
+        class_names_env = os.environ.get('ML_CLASS_NAMES')
+
+        if class_names_env:
+            self.class_names = class_names_env.split(',')
+
+            return
+
+        # Try to load from a file
+        class_names_file = os.environ.get(
+            'ML_CLASS_NAMES_FILE', './config/actions.txt')
+        try:
+            with open(class_names_file, 'r') as f:
+                self.class_names = [line.strip() for line in f.readlines()]
+
+            print(
+                f"Loaded {len(self.class_names)} classes from {class_names_file}")
+        except Exception as e:
+            print(f"Could not load class names from {class_names_file}: {e}")
+
+            self.class_names = [
+                "welcome", "we", "happy", "you", "here",
+                "today", "topic", "thank you", "goodbye", "name"
+            ]
+
+            print("Using default class names")
