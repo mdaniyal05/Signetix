@@ -128,3 +128,45 @@ class KerasInferenceService:
             ]
 
             print("Using default class names")
+
+    def extract_features(self, frame: np.ndarray) -> tuple:
+        """
+        Extract a 99-dimensional feature vector from the frame using MediaPipe Hands.
+        Returns (features, hand_detected_flag)
+        """
+        rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        results = self.hands.process(rgb_frame)
+
+        if not results.multi_hand_landmarks:
+            return np.zeros(99, dtype=np.float32), False
+
+        for hand_landmarks in results.multi_hand_landmarks:
+            # Extract joint coordinates
+            joint = np.zeros((21, 4))
+
+            for j, lm in enumerate(hand_landmarks.landmark):
+                joint[j] = [lm.x, lm.y, lm.z, lm.visibility]
+
+            # Compute angles between joints
+            v1 = joint[[0, 1, 2, 3, 0, 5, 6, 7, 0, 9, 10,
+                        11, 0, 13, 14, 15, 0, 17, 18, 19], :3]
+            v2 = joint[[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
+                        12, 13, 14, 15, 16, 17, 18, 19, 20], :3]
+            v = v2 - v1
+
+            # Normalize vectors
+            v = v / np.linalg.norm(v, axis=1)[:, np.newaxis]
+
+            # Calculate angles
+            angle = np.arccos(np.einsum('nt,nt->n',
+                                        v[[0, 1, 2, 4, 5, 6, 8, 9, 10,
+                                            12, 13, 14, 16, 17, 18], :],
+                                        v[[1, 2, 3, 5, 6, 7, 9, 10, 11, 13, 14, 15, 17, 18, 19], :]))
+            angle = np.degrees(angle)
+
+            # Concatenate joint.flatten() (84 values) and angle (15 values) to get 99 features
+            d = np.concatenate([joint.flatten(), angle])
+
+            return d, True
+
+        return np.zeros(99, dtype=np.float32), False
