@@ -170,3 +170,41 @@ class KerasInferenceService:
             return d, True
 
         return np.zeros(99, dtype=np.float32), False
+
+    def interpolate_features(self, time_point: float) -> np.ndarray:
+        """
+        Interpolate features at a specific time point from neighboring frames.
+        Uses linear interpolation between the closest frames before and after.
+        """
+        if len(self.feature_buffer) < 2 or len(self.time_buffer) < 2:
+            # Not enough frames to interpolate
+            return np.zeros(99, dtype=np.float32)
+
+        # Find frames that bracket the desired time point
+        i = 0
+
+        while i < len(self.time_buffer) - 1 and self.time_buffer[i+1] < time_point:
+            i += 1
+
+        if i >= len(self.time_buffer) - 1:
+            # Time point is after all available frames, use the last frame
+            return self.feature_buffer[i][0]  # Just return features
+
+        if self.time_buffer[i] > time_point:
+            # Time point is before all available frames, use the first frame
+            return self.feature_buffer[0][0]  # Just return features
+
+        # Get the two neighboring frames
+        t0, t1 = self.time_buffer[i], self.time_buffer[i+1]
+
+        # Get features
+        f0, f1 = self.feature_buffer[i][0], self.feature_buffer[i+1][0]
+
+        # Calculate interpolation factor (0 to 1)
+        if t1 == t0:  # Avoid division by zero
+            alpha = 0
+        else:
+            alpha = (time_point - t0) / (t1 - t0)
+
+        # Linear interpolation: f = (1-alpha)*f0 + alpha*f1
+        return (1-alpha) * f0 + alpha * f1
