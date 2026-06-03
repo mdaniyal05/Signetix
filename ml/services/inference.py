@@ -208,3 +208,38 @@ class KerasInferenceService:
 
         # Linear interpolation: f = (1-alpha)*f0 + alpha*f1
         return (1-alpha) * f0 + alpha * f1
+
+    def generate_interpolated_sequence(self) -> List[np.ndarray]:
+        """
+        Generate a sequence of evenly spaced features at the target FPS.
+        """
+        if not self.time_buffer or not self.feature_buffer:
+            return []
+
+        # Get the time range from the buffer
+        start_time = max(
+            self.time_buffer[0], time.time() - self.sliding_window_duration)
+
+        end_time = self.time_buffer[-1]
+
+        if end_time - start_time < 0.1:  # Less than 100ms of data, not enough for reliable sequence
+            return []
+
+        # Calculate how many frames we need based on target FPS and available time window
+        available_duration = min(
+            end_time - start_time, self.sliding_window_duration)
+
+        num_frames = min(self.sequence_length, int(
+            available_duration * self.target_fps))
+
+        if num_frames < 3:  # Need at least a few frames for meaningful prediction
+            return []
+
+        # Generate evenly spaced timestamps
+        timestamps = np.linspace(
+            end_time - available_duration, end_time, num_frames)
+
+        # Interpolate features at each timestamp
+        sequence = [self.interpolate_features(t) for t in timestamps]
+
+        return sequence
