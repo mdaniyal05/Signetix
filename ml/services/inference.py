@@ -243,3 +243,117 @@ class KerasInferenceService:
         sequence = [self.interpolate_features(t) for t in timestamps]
 
         return sequence
+
+    async def process_frame(self, frame: np.ndarray) -> List[Dict[str, Any]]:
+        """Process a video frame and return predictions using time-based interpolation"""
+        start_proc_time = time.time()
+
+        try:
+            # Extract features and check for hand
+            features, hand_detected = self.extract_features(frame)
+
+            # Add frame and features to buffer with timestamp
+            current_time = time.time()
+            self.frame_buffer.append(frame)
+            self.time_buffer.append(current_time)
+            self.feature_buffer.append((features, hand_detected))
+
+            # Clean up old frames
+            while self.time_buffer and (current_time - self.time_buffer[0] > self.max_frame_age):
+                self.time_buffer.popleft()
+                self.frame_buffer.popleft()
+                self.feature_buffer.popleft()
+
+            # Update hand state
+            if not hand_detected:
+                self.no_hand_counter += 1
+
+                if self.no_hand_counter >= self.no_hand_threshold:
+                    if self.hand_present:  # State transition: hand present -> not present
+                        self.hand_present = False
+                        self.sequence_buffer = []  # Reset buffer on transition
+                        self.last_prediction = None
+                        return []  # Return empty to clear UI
+                    return []  # No hand, no prediction
+            else:
+                self.no_hand_counter = 0
+                self.hand_present = True
+
+            # Only proceed with interpolation if a hand is present
+            if not self.hand_present:
+                return []
+
+            # Check if it's time to generate a new interpolated sequence
+            if (current_time - self.last_interpolation_time >= self.interpolation_interval):
+                self.last_interpolation_time = current_time
+
+                # Generate interpolated sequence
+                self.sequence_buffer = self.generate_interpolated_sequence()
+
+                # Only make prediction if we have enough frames
+                # Allow at least half the sequence length
+                if len(self.sequence_buffer) < self.sequence_length // 2:
+                    return []
+
+                # Pad sequence if needed (this ensures model gets exactly what it expects)
+                if len(self.sequence_buffer) < self.sequence_length:
+                    # Pad by repeating the last frame
+                    pad_length = self.sequence_length - \
+                        len(self.sequence_buffer)
+
+                    self.sequence_buffer.extend(
+                        [self.sequence_buffer[-1]] * pad_length)
+
+                # Make prediction
+                input_data = np.expand_dims(
+                    np.array(self.sequence_buffer, dtype=np.float32), axis=0)
+
+                predictions = self.model.predict(input_data, verbose=0)[0]
+
+                # Process prediction
+                predicted_idx = int(np.argmax(predictions))
+                confidence = float(predictions[predicted_idx])
+
+                # Only return predictions with high confidence
+                if confidence < self.confidence_threshold:
+                    return []
+
+                action = self.class_names[predicted_idx]
+                self.last_prediction = action
+                self.action_seq.append(action)
+
+                # Prediction smoothing - only show after consistent predictions
+                if len(self.action_seq) < 2:
+                    return []
+
+                # Keep action sequence from getting too long
+                if len(self.action_seq) > 5:
+                    self.action_seq = self.action_seq[-5:]
+
+                # Check for consistent predictions
+                # Only return prediction if the latest N predictions are the same
+                # Last 2 predictions are the same
+                if len(set(self.action_seq[-2:])) == 1:
+                    print(
+                        f"Prediction: {action}, confidence: {confidence:.2f}")
+
+                    # Track processing time for performance monitoring
+                    proc_time = time.time() - start_proc_time
+                    self.processing_times.append(proc_time)
+
+                    # Periodically log performance stats
+                    if len(self.processing_times) % 30 == 0:
+                        avg_time = sum(self.processing_times) / \
+                            len(self.processing_times)
+
+                        self.actual_fps = 1.0 / avg_time if avg_time > 0 else 0
+
+                        print(
+                            f"Processing stats: Avg time: {avg_time*1000:.1f}ms, Effective FPS: {self.actual_fps:.1f}")
+
+                    return [{"gesture": action, "confidence": confidence}]
+
+            return []  # Default empty response
+        except Exception as e:
+            print(f"Error during inference: {e}")
+            return []
