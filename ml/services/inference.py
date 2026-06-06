@@ -357,3 +357,35 @@ class KerasInferenceService:
         except Exception as e:
             print(f"Error during inference: {e}")
             return []
+
+    async def handle_client(self, websocket: WebSocket):
+        """Handle WebSocket client connection"""
+        print("New inference client connected")
+
+        try:
+            # Helper function for sending responses
+            async def send_response(status, data=None, error=None):
+                response = {"status": status}
+
+                if data is not None:
+                    response.update(data)
+                if error is not None:
+                    response["message"] = str(error)
+
+                await websocket.send_json(response)
+
+            async for message in websocket.iter_json():
+                try:
+                    if message.get("type") == "frame":
+                        jpg_data = b64decode(message["data"])
+                        nparr = np.frombuffer(jpg_data, np.uint8)
+                        frame = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+
+                        predictions = await self.process_frame(frame)
+
+                        await send_response("success", {"predictions": predictions})
+                except Exception as e:
+                    print(f"Error processing message: {e}")
+                    await send_response("error", error=str(e))
+        except Exception as e:
+            print(f"WebSocket connection error: {e}")
