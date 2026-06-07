@@ -1,5 +1,7 @@
+import WelcomePage from "./pages/prototypes/Welcome"
+
 export function App() {
-  return <h1>SIGNETIX</h1>
+  return <WelcomePage/>
 }
 
 export default App
