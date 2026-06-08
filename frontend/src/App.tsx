@@ -1,7 +1,7 @@
-import WelcomePage from "./pages/prototypes/Welcome"
+import LoginPage from "./pages/prototypes/Login"
 
 export function App() {
-  return <WelcomePage/>
+  return <LoginPage />
 }
 
 export default App
