@@ -1,7 +1,7 @@
-import LoginPage from "./pages/prototypes/Login"
+import RegisterPage from "./pages/prototypes/Register"
 
 export function App() {
-  return <LoginPage />
+  return <RegisterPage />
 }
 
 export default App
