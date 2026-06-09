@@ -1,7 +1,7 @@
-import DashboardPage from "./pages/prototypes/Dashboard"
+import ChatPage from "./pages/prototypes/Chat"
 
 export function App() {
-  return <DashboardPage />
+  return <ChatPage />
 }
 
 export default App
