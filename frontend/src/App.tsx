@@ -1,7 +1,7 @@
-import RegisterPage from "./pages/prototypes/Register"
+import ProfilePage from "./pages/prototypes/Profile"
 
 export function App() {
-  return <RegisterPage />
+  return <ProfilePage />
 }
 
 export default App
