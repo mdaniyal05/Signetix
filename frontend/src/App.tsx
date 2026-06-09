@@ -1,7 +1,7 @@
-import VoiceCallPrototypePage from "./pages/prototypes/VoiceCall"
+import VideoCallPrototypePage from "./pages/prototypes/VideoCall"
 
 export function App() {
-  return <VoiceCallPrototypePage />
+  return <VideoCallPrototypePage />
 }
 
 export default App
