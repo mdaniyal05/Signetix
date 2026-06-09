@@ -1,7 +1,7 @@
-import ChatPage from "./pages/prototypes/Chat"
+import VoiceCallPrototypePage from "./pages/prototypes/VoiceCall"
 
 export function App() {
-  return <ChatPage />
+  return <VoiceCallPrototypePage />
 }
 
 export default App
