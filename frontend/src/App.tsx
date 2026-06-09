@@ -1,7 +1,7 @@
-import ProfilePage from "./pages/prototypes/Profile"
+import DashboardPage from "./pages/prototypes/Dashboard"
 
 export function App() {
-  return <ProfilePage />
+  return <DashboardPage />
 }
 
 export default App
