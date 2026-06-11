@@ -7,17 +7,11 @@ import {
   PhoneOff,
   Captions,
   Volume2,
-  Maximize2,
-  HandMetal,
+  // Maximize2,
+  // HandMetal,
   Brain,
   Zap,
 } from "lucide-react"
-
-const predictions = [
-  { gesture: "WELCOME", confidence: 97.4 },
-  { gesture: "HAPPY", confidence: 84.1 },
-  { gesture: "TODAY", confidence: 71.8 },
-]
 
 export default function VideoCallPrototypePage() {
   const [micOn, setMicOn] = useState(true)
@@ -42,12 +36,13 @@ export default function VideoCallPrototypePage() {
             <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400" />
           </div>
           {tts && (
-            <div className="flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/15 px-3 py-1.5">
-              <Volume2 size={13} className="animate-pulse text-emerald-400" />
-              <span className="font-mono text-xs text-emerald-400">
-                Speaking: "WELCOME"
-              </span>
-            </div>
+            // <div className="flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/15 px-3 py-1.5">
+            //   <Volume2 size={13} className="animate-pulse text-emerald-400" />
+            //   <span className="font-mono text-xs text-emerald-400">
+            //     Speaking: "WELCOME"
+            //   </span>
+            // </div>
+            <></>
           )}
         </div>
 
@@ -55,18 +50,12 @@ export default function VideoCallPrototypePage() {
         <div className="flex items-center gap-2 rounded-full border border-white/10 bg-black/40 px-4 py-1.5 backdrop-blur-xl">
           <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400" />
           <span className="font-mono text-xs text-white/60">00:12:34</span>
-          <span className="text-xs text-white/20">·</span>
-          <span className="font-mono text-xs text-white/40">
-            End-to-end encrypted
-          </span>
         </div>
 
         {/* Right: model fps */}
         <div className="flex items-center gap-2 rounded-full border border-white/10 bg-black/30 px-3 py-1.5 backdrop-blur-sm">
           <Zap size={11} className="text-[hsl(220,50%,65%)]" />
-          <span className="font-mono text-xs text-white/40">
-            30 FPS · 95% conf.
-          </span>
+          <span className="font-mono text-xs text-white/40">30 FPS</span>
         </div>
       </div>
 
@@ -85,7 +74,7 @@ export default function VideoCallPrototypePage() {
         {/* Name tag */}
         <div className="absolute bottom-4 left-4 z-20">
           <div className="flex items-center gap-2 rounded-lg border border-white/10 bg-black/50 px-3 py-1.5 backdrop-blur-sm">
-            <span className="text-sm font-medium text-white">Sara Ahmed</span>
+            <span className="text-sm font-medium text-white">Saad Ahmed</span>
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
           </div>
         </div>
@@ -93,59 +82,11 @@ export default function VideoCallPrototypePage() {
         {/* ── GESTURE OVERLAY ── */}
         {subtitles && (
           <>
-            {/* Prediction badges — top right */}
-            <div className="absolute top-16 right-4 z-30 flex flex-col gap-2">
-              <div className="mb-1">
-                <p className="mb-1 text-right font-mono text-xs tracking-wider text-white/30 uppercase">
-                  PSL Detected
-                </p>
-              </div>
-              {predictions.map((p, i) => (
-                <div
-                  key={p.gesture}
-                  className="flex min-w-[190px] items-center justify-between gap-5 rounded-xl border border-white/10 px-4 py-2.5 backdrop-blur-sm"
-                  style={{
-                    backgroundColor: `hsla(38, 50%, ${35 - i * 5}%, ${0.85 - i * 0.2})`,
-                  }}
-                >
-                  <span
-                    className="font-mono text-sm font-bold tracking-wide"
-                    style={{ color: `hsl(38, 30%, ${95 - i * 10}%)` }}
-                  >
-                    {p.gesture}
-                  </span>
-                  <div className="flex flex-col items-end gap-1">
-                    <span
-                      className="font-mono text-xs"
-                      style={{ color: `hsl(38, 30%, ${80 - i * 10}%)` }}
-                    >
-                      {p.confidence.toFixed(1)}%
-                    </span>
-                    <div className="h-1 w-16 overflow-hidden rounded-full bg-black/20">
-                      <div
-                        className="h-full rounded-full bg-white/50"
-                        style={{ width: `${p.confidence}%` }}
-                      />
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-
             {/* Subtitle bar — bottom centre */}
-            <div className="absolute bottom-16 left-1/2 z-30 w-full max-w-2xl -translate-x-1/2 px-6">
-              <div className="rounded-2xl border border-white/10 bg-black/75 px-6 py-4 text-center backdrop-blur-md">
-                <div className="mb-1 flex items-center justify-center gap-2">
-                  <Captions size={14} className="text-[hsl(38,50%,72%)]" />
-                  <span className="font-mono text-xs tracking-wider text-[hsl(38,50%,72%)] uppercase">
-                    Live Subtitle
-                  </span>
-                </div>
-                <p className="font-mono text-2xl font-bold tracking-widest text-white">
-                  WELCOME
-                </p>
-                <p className="mt-1 font-mono text-xs text-white/40">
-                  PSL Gesture · 97.4% confidence · Speaking aloud
+            <div className="absolute bottom-30 left-1/2 z-30 w-full max-w-2xl -translate-x-1/2 px-6">
+              <div className="rounded-2xl px-6 py-4 text-center backdrop-blur-md">
+                <p className="font-mono text-lg font-bold tracking-widest text-white">
+                  Welcome to the call, Saad!
                 </p>
               </div>
             </div>
@@ -194,17 +135,6 @@ export default function VideoCallPrototypePage() {
               <Captions size={14} />
               Subtitles
             </button>
-            <button
-              onClick={() => setTts(!tts)}
-              className={`flex items-center gap-2 rounded-xl border px-3.5 py-2 text-xs font-medium transition-all ${
-                tts
-                  ? "border-emerald-500/30 bg-emerald-500/20 text-emerald-400"
-                  : "border-white/10 bg-white/5 text-white/40 hover:bg-white/10"
-              }`}
-            >
-              <Volume2 size={14} />
-              TTS
-            </button>
           </div>
 
           {/* Centre */}
@@ -220,7 +150,7 @@ export default function VideoCallPrototypePage() {
               >
                 {camOn ? <Video size={20} /> : <VideoOff size={20} />}
               </button>
-              <span className="font-mono text-xs text-white/30">Cam</span>
+              <span className="font-mono text-xs text-white/30">Camera</span>
             </div>
 
             <div className="flex flex-col items-center gap-1">
@@ -249,9 +179,16 @@ export default function VideoCallPrototypePage() {
 
           {/* Right */}
           <div className="flex items-center gap-2">
-            <button className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3.5 py-2 text-xs font-medium text-white/40 transition-all hover:bg-white/10">
-              <Maximize2 size={14} />
-              Fullscreen
+            <button
+              onClick={() => setTts(!tts)}
+              className={`flex items-center gap-2 rounded-xl border px-3.5 py-2 text-xs font-medium transition-all ${
+                tts
+                  ? "border-emerald-500/30 bg-emerald-500/20 text-emerald-400"
+                  : "border-white/10 bg-white/5 text-white/40 hover:bg-white/10"
+              }`}
+            >
+              <Volume2 size={14} />
+              TTS
             </button>
           </div>
         </div>
