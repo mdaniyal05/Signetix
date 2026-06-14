@@ -72,7 +72,7 @@ const tech = [
   },
   {
     label: "Backend",
-    items: ["Node.js", "Express", "MongoDB", "Socket.io", "RabbitMQ"],
+    items: ["Node.js", "Express", "MongoDB", "Socket.io"],
   },
   {
     label: "AI / ML",

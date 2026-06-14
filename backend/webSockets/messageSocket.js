@@ -1,4 +1,3 @@
-const RabbitMqConstants = require("../constants/rabbitMqConstants.js");
 const EventConstants = require("../constants/eventConstants.js");
 const MessageSocketUtils = require("./utils/messageSocketUtils.js");
 const EventDispatcher = require("../events/eventDispatcher.js");
@@ -11,8 +10,6 @@ class MessageSocket {
   #databaseCachedChats = null;
 
   constructor(socket, userSocketMap) {
-    //setup rabbitMq
-    this.#messageQueueName = RabbitMqConstants.MESSAGES_QUEUE;
     //setup events (for observer/subject pattern)
     EventDispatcher.registerListener(
       EventConstants.CHAT_CREATED_EVENT,

@@ -37,11 +37,8 @@ const authRoutes = require("../routes/AuthRoutes.js");
 const mongoDburl = process.env.MONGO_DB_URL;
 const port = process.env.PORT;
 
-//setup a logger
-setupApplicationLogger(ServerConstants.LOG_LEVEL_DEBUG);
-
-//setup managers
-setupManagers();
+//setup system
+setupSystem();
 
 //routes
 const SignetixApp = setupRoutes();
@@ -62,10 +59,10 @@ mainServer.listen(port, async () => {
   const websocketManager = new WebSocketManager(mainServer);
 });
 
-async function setupManagers() {
+async function setupSystem() {
   try {
-    //initialize RabbitMQ
-    await ManagerFactory.getRabbitMqQueueManager().establishConnection();
+    await setupApplicationLogger(ServerConstants.LOG_LEVEL_DEBUG);
+
     //setup message event
     EventFactory.setMessageEvent = new MessageEvent();
     EventFactory.setAccessibilitySettingsEvent =
@@ -74,10 +71,6 @@ async function setupManagers() {
     EventFactory.setUserAuthenticationEvent = new UserAuthenticationEvent();
     EventFactory.setCallLogEvent = new CallLogEvent();
     EventFactory.setChatEvet = new ChatEvent();
-    //setup processors, if any
-    await ManagerFactory.getRabbitMqProcessorManager().executeMessageProcessor(
-      ManagerFactory.getRabbitMqQueueManager().getRabbitMqChannel()
-    );
 
     //setup Amazon S3 Manager
     //dont await, let it run on a separate thread
@@ -155,7 +148,7 @@ async function setupJwtManager() {
 
 async function setupApplicationLogger(logLevel) {
   const logger = await CommonUtils.getLogger(logLevel);
-
+  console.log("Setting logger;");
   LoggerFactory.setApplicationLogger = logger;
 }
 
