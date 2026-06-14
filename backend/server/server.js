@@ -75,9 +75,11 @@ async function setupSystem() {
     //setup Amazon S3 Manager
     //dont await, let it run on a separate thread
     //as it wont be needed immediately
-    await ManagerFactory.getAwsS3Manager().initiateS3Connection();
+    // await ManagerFactory.getAwsS3Manager().initiateS3Connection();
+
     //Twilio OTP/Verify
-    await setupTwilio();
+    // await setupTwilio();
+    
     //Jwt Manager
     await setupJwtManager();
   } catch (exception) {
