@@ -3,7 +3,7 @@ name = "ml"
 version = "0.1.0"
 description = "A machine learning module for video processing and hand gesture analysis."
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.11"
 dependencies = [
     "aiohttp>=3.13.5",
     "av>=9.0.0",
