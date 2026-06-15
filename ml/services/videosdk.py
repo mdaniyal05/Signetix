@@ -1,7 +1,11 @@
 import asyncio
+from videosdk import Meeting
+import numpy as np
 from time import time
+from typing import Optional, Set
 import os
 import dotenv
+from fastapi import WebSocket
 from collections import deque
 import time
 
@@ -54,3 +58,19 @@ class VideoProcessor:
         self.record_filename = None
         self.recorded_frames = []        # List to store captured frames
         self.recorded_timestamps = []    # List to store precise timestamps
+
+
+class VideoSDKService:
+    def __init__(self):
+        self.meeting: Optional[Meeting] = None
+        self.meeting_id: Optional[str] = None
+        self.react_clients: Set[WebSocket] = set()
+        self.active_processors = set()
+        self.last_predictions = []
+        self.last_broadcast_time = 0
+        self.broadcast_interval = BROADCAST_INTERVAL
+        self.ml_websocket: Optional[WebSocket] = None
+        self.ml_queue = asyncio.Queue()
+        self.is_running = False
+        self.monitor_task = None
+        self.processor_task = None
