@@ -53,7 +53,7 @@ mainServer.listen(port, async () => {
   await CommonUtils.waitForVariableToBecomeNonNull(getApplicationLogger);
 
   LoggerFactory.getApplicationLogger.info(
-    `Signetix Server is Up & Running on ${process.env.PRODUCTION_URL}:${port}`
+    `Signetix Server is Up & Running on http://localhost:${port}`
   );
 
   const websocketManager = new WebSocketManager(mainServer);
