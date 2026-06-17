@@ -102,6 +102,11 @@ class MeetingIDPayload(BaseModel):
     meetingId: str
 
 
+@app.get("/")
+async def root():
+    return {"message": "Welcome to the Sign Language Detection System API!"}
+
+
 @app.post("/meeting-id")
 async def post_meeting_id(payload: MeetingIDPayload):
     global CURRENT_MEETING_ID

@@ -79,7 +79,7 @@ async function setupSystem() {
 
     //Twilio OTP/Verify
     // await setupTwilio();
-    
+
     //Jwt Manager
     await setupJwtManager();
   } catch (exception) {
@@ -92,7 +92,14 @@ async function setupSystem() {
 function setupRoutes() {
   try {
     const SignetixApp = express();
+
     SignetixApp.use(express.json());
+    SignetixApp.use(express.urlencoded({ extended: true }));
+
+    SignetixApp.get("/", (req, res) => {
+      res.status(200);
+      res.send("Hello, Welcome to Signetix!");
+    });
 
     //auth middleware
     const authMiddleWare = new AuthMiddleWare();
@@ -101,7 +108,7 @@ function setupRoutes() {
       await authMiddleWare.authenticate(request, response, next);
     });
 
-    SignetixApp.use("/", homeRoutes);
+    // SignetixApp.use("/", homeRoutes);
     SignetixApp.use("/users", userRoutes);
     SignetixApp.use("/contacts", contactRoutes);
     SignetixApp.use("/chats", chatRoutes);
