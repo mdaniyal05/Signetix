@@ -1,0 +1,263 @@
+.page {
+  min-height: 100vh;
+  background: #1a1a1a;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: 60px 32px 48px;
+  user-select: none;
+}
+
+.top {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  margin-top: 32px;
+}
+
+.avatar {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  background: #404040;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 42px;
+  font-weight: 600;
+  color: #fff;
+}
+
+.avatarImg {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.name {
+  font-size: 26px;
+  font-weight: 700;
+  color: #fff;
+  text-align: center;
+}
+
+.subtitle {
+  font-size: 16px;
+  color: #ccc;
+  text-align: center;
+}
+
+.timer {
+  font-size: 18px;
+  color: #aaa;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 1px;
+}
+
+.actions {
+  display: flex;
+  justify-content: center;
+  gap: 56px;
+  width: 100%;
+  padding-bottom: 16px;
+}
+
+.declineBtn,
+.acceptBtn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.declineBtn > :first-child {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  background: var(--red);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 16px rgba(239, 8, 39, 0.4);
+  transition: opacity 0.15s;
+}
+
+.declineBtn:hover > :first-child {
+  opacity: 0.85;
+}
+
+.acceptBtn > :first-child {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  background: #4caf50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 16px rgba(76, 175, 80, 0.4);
+  transition: opacity 0.15s;
+}
+
+.acceptBtn:hover > :first-child {
+  opacity: 0.85;
+}
+
+.controls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 24px;
+  background: rgba(31, 41, 55, 0.75);
+  border-radius: 999px;
+  padding: 16px 32px;
+  backdrop-filter: blur(8px);
+}
+
+.ctrlBtn {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: #1f2937;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  transition:
+    opacity 0.15s,
+    background 0.15s;
+}
+
+.ctrlBtn:hover {
+  opacity: 0.85;
+}
+
+.ctrlBtnActive {
+  background: #374151;
+}
+
+.hangupBtn {
+  background: var(--red) !important;
+  box-shadow: 0 4px 14px rgba(239, 8, 39, 0.35);
+}
+
+.voiceCenter {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+}
+
+.videoPage {
+  min-height: 100vh;
+  background: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.videoGrid {
+  width: 100%;
+  height: 100vh;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2px;
+  background: #111;
+}
+
+.videoSingle {
+  width: 100%;
+  height: 100vh;
+  background: #111;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.videoSlot {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  background: #222;
+}
+
+.videoPlaceholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  color: #888;
+}
+
+.videoPlaceholderAvatar {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: #333;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  color: #fff;
+  font-weight: 600;
+}
+
+.videoName {
+  font-size: 16px;
+  color: #aaa;
+}
+
+.pip {
+  position: absolute;
+  bottom: 112px;
+  right: 16px;
+  width: 110px;
+  height: 160px;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #333;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+  cursor: pointer;
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  z-index: 10;
+}
+
+.pipVideo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.controlsAbsolute {
+  position: absolute;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  background: rgba(31, 41, 55, 0.8);
+  border-radius: 999px;
+  padding: 14px 28px;
+  backdrop-filter: blur(10px);
+  z-index: 20;
+}
+
+.ringingText {
+  font-size: 16px;
+  color: #ccc;
+}
