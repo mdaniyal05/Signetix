@@ -1,0 +1,183 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: #fff;
+  overflow: hidden;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px 12px;
+  border-bottom: 1px solid var(--light-gray);
+  gap: 12px;
+  flex-shrink: 0;
+  background: #fff;
+}
+
+.title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #111;
+}
+
+.searchInput {
+  height: 34px;
+  border: 1px solid var(--light-gray);
+  border-radius: 20px;
+  padding: 0 14px;
+  font-size: 13px;
+  background: var(--background);
+  color: #111;
+  width: 180px;
+  transition:
+    width 0.2s,
+    border-color 0.15s;
+}
+
+.searchInput:focus {
+  border-color: var(--primary);
+  width: 220px;
+  outline: none;
+}
+
+.list {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.empty {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 40px;
+  color: var(--gray);
+}
+
+.emptyTitle {
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+}
+
+.emptySubtitle {
+  font-size: 14px;
+  color: var(--gray);
+  text-align: center;
+}
+
+.callRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--light-gray);
+  transition: background 0.1s;
+}
+
+.callRow:hover {
+  background: var(--background);
+}
+
+.avatarWrap {
+  flex-shrink: 0;
+}
+
+.avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.avatarFallback {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--background);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--primary);
+}
+
+.callInfo {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.callName {
+  font-size: 15px;
+  font-weight: 600;
+  color: #111;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.callMeta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.callType {
+  font-size: 13px;
+  color: var(--gray);
+}
+
+.missed {
+  color: var(--red);
+}
+
+.callDuration {
+  font-size: 12px;
+  color: var(--gray);
+}
+
+.callTime {
+  font-size: 12px;
+  color: var(--gray);
+}
+
+.callActions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.actionBtn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--primary);
+  padding: 8px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  transition: background 0.12s;
+}
+
+.actionBtn:hover:not(:disabled) {
+  background: var(--background);
+}
+
+.actionBtn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.deleteBtn {
+  color: var(--red);
+}
