@@ -1,0 +1,281 @@
+.page {
+  height: 100%;
+  overflow-y: auto;
+  background: var(--background);
+}
+
+.inner {
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 24px 20px 48px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.loading {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid var(--light-gray);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.miniSpinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.profileHeader {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: #fff;
+  border-radius: 14px;
+  padding: 20px 16px;
+  margin-bottom: 20px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+}
+
+.avatarWrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.avatar {
+  width: 68px;
+  height: 68px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.avatarFallback {
+  width: 68px;
+  height: 68px;
+  border-radius: 50%;
+  background: var(--background);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cameraBtn {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: #fff;
+  border: 2px solid #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.cameraBtn:hover:not(:disabled) {
+  opacity: 0.85;
+}
+.cameraBtn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.profileText {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  overflow: hidden;
+}
+
+.section {
+  background: #fff;
+  border-radius: 14px;
+  padding: 16px;
+  margin-bottom: 20px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.sectionTitle {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--gray);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 12px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--light-gray);
+}
+
+.field:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #333;
+}
+
+.value {
+  font-size: 15px;
+  color: var(--gray);
+}
+
+.passwordMask {
+  font-size: 18px;
+  color: var(--gray);
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--light-gray);
+  padding: 6px 0;
+  cursor: pointer;
+  text-align: left;
+  letter-spacing: 3px;
+  transition: border-color 0.15s;
+}
+
+.passwordMask:hover {
+  border-color: var(--primary);
+}
+
+.passwordBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.pwRow {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.pwField {
+  display: flex;
+  align-items: center;
+  height: 42px;
+  border: 1px solid var(--light-gray);
+  border-radius: 8px;
+  padding: 0 12px;
+  background: var(--background);
+  transition: border-color 0.15s;
+}
+
+.pwField:focus-within {
+  border-color: var(--primary);
+}
+
+.pwError {
+  border-color: var(--red) !important;
+}
+
+.pwInput {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-size: 14px;
+  background: transparent;
+  color: #111;
+}
+
+.eyeBtn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--gray);
+  display: flex;
+  align-items: center;
+}
+
+.errorText {
+  font-size: 12px;
+  color: var(--red);
+}
+
+.pwActions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.saveBtn {
+  height: 38px;
+  padding: 0 18px;
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.saveBtn:hover:not(:disabled) {
+  opacity: 0.85;
+}
+
+.saveBtnDisabled {
+  background: var(--light-gray);
+  color: var(--gray);
+  cursor: not-allowed;
+}
+
+.cancelBtn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--red);
+}
+
+.logoutBtn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--red);
+  text-align: left;
+  padding: 4px 0;
+  transition: opacity 0.15s;
+}
+
+.logoutBtn:hover {
+  opacity: 0.75;
+}
