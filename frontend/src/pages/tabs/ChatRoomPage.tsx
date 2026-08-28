@@ -1,4 +1,13 @@
-import { useCallback, useEffect, useRef, useState, type FormEvent } from "react"
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type SyntheticEvent,
+  type KeyboardEvent,
+  type ChangeEvent,
+} from "react"
 import { useParams, useNavigate } from "react-router-dom"
 import { ArrowLeft, Send, Phone, Video } from "lucide-react"
 import { format } from "date-fns"
@@ -17,61 +26,74 @@ const ChatRoomPage = () => {
   const { data: messages = [] } = useChatMessagesQuery(id)
   const { data: contacts = [] } = useContactsQuery({ phoneNumber })
 
-  const chat = chats.find((c) => c._id === id)
-  const otherParticipant = chat?.participants.find((p) => p._id !== user?._id)
+  const chat = useMemo(() => chats.find((c) => c._id === id), [chats, id])
+
+  const otherParticipant = useMemo(
+    () => chat?.participants.find((p) => p._id !== user?._id),
+    [chat, user]
+  )
+
   const otherPhone = otherParticipant?.phoneNumber ?? ""
   const otherPic = otherParticipant?.profilePicture ?? ""
 
-  const resolvedName = (() => {
+  const resolvedName = useMemo(() => {
     const contact = contacts.find(
       (c) => c.contactUserId.phoneNumber === otherPhone
     )
     return contact?.contactUserId.name ?? otherPhone
-  })()
+  }, [contacts, otherPhone])
 
   const [text, setText] = useState("")
   const bottomRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
-  // Filter out messages deleted by this user
-  const visibleMessages = messages.filter(
-    (m) => !(m.deletedBy && user && m.deletedBy.includes(user._id))
+  const visibleMessages = useMemo(
+    () =>
+      messages.filter(
+        (m) => !(m.deletedBy && user && m.deletedBy.includes(user._id))
+      ),
+    [messages, user]
   )
 
-  // Scroll to bottom whenever messages update
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" })
   }, [visibleMessages.length])
 
   const handleSend = useCallback(
-    (e?: FormEvent) => {
+    (e?: SyntheticEvent<HTMLFormElement>) => {
       e?.preventDefault()
       if (!text.trim() || !chat) return
+
       sendMessage(
         text.trim(),
         chat.participants.map((p) => p.phoneNumber),
         chat._id
       )
+
       setText("")
+
       textareaRef.current?.focus()
     },
     [text, chat, sendMessage]
   )
 
-  // Send on Enter (Shift+Enter = newline)
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault()
-      handleSend()
-    }
-  }
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent<HTMLTextAreaElement>) => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault()
 
-  // Auto-resize textarea
-  const handleInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+        handleSend()
+      }
+    },
+    [handleSend]
+  )
+
+  const handleInput = useCallback((e: ChangeEvent<HTMLTextAreaElement>) => {
     setText(e.target.value)
+
     e.target.style.height = "auto"
     e.target.style.height = Math.min(e.target.scrollHeight, 120) + "px"
-  }
+  }, [])
 
   return (
     <div className={styles.page}>
