@@ -1,9 +1,13 @@
-tensorflow==2.18.0
-mediapipe==0.10.21
-opencv-python==4.11.0.86
-numpy==1.26.4
-scikit-learn==1.6.1
-tqdm==4.67.1
-matplotlib==3.10.0
-fastapi==0.115.6
-uvicorn[standard]==0.34.0
+# PSL sign-recognition training pipeline.
+# IMPORTANT: install these inside a Python 3.11 or 3.12 virtual environment.
+# TensorFlow and MediaPipe do NOT support Python 3.13/3.14 yet.
+
+tensorflow==2.18.0        # Keras 3 sequence model (CPU is sufficient for this small model)
+mediapipe==0.10.21        # modern Tasks API: HandLandmarker (replaces deprecated mp.solutions.hands)
+opencv-python==4.11.0.86  # video decoding / frame access
+numpy==1.26.4             # pinned <2 for TF/MediaPipe compatibility
+scikit-learn==1.6.1       # train/val/test splitting, metrics, confusion matrix
+tqdm==4.67.1              # progress bars for the slow extraction pass
+matplotlib==3.10.0        # segmentation sanity plots + training curves
+fastapi==0.115.6          # real-time inference WebSocket server
+uvicorn[standard]==0.34.0 # ASGI server to run FastAPI
