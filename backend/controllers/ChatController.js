@@ -607,19 +607,20 @@ class ChatController {
       participant._id.toString()
     );
 
-    const existingChat = await this.#getExistingChats(
-      mainUserPhoneNumberUserObject._id.toString(),
-      participantsIdMap
-    );
+    // Direction-agnostic: one chat per member set. If it already exists, return it
+    // (idempotent) so the client just opens it instead of creating a duplicate.
+    const existingChat =
+      await ServiceFactory.getChatService.findChatByMemberIds([
+        mainUserPhoneNumberUserObject._id.toString(),
+        ...participantsIdMap,
+      ]);
 
-    if (existingChat.length > 0) {
-      return new SignetixResultDto(
-        existingChat,
-        new SignetixException(
-          400,
-          `A chat already exists between ${mainUserPhoneNumber} and ${participants} - chatId: ${existingChat[ControllerConstants.ZERO_INDEX]._id.toString()}`
-        )
+    if (existingChat) {
+      await ServiceFactory.getMongooseService.commitMongooseTransaction(
+        mongooseSession
       );
+
+      return new SignetixResultDto([existingChat], null);
     }
 
     try {

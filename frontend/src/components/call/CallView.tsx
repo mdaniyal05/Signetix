@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useMeeting } from "@videosdk.live/react-sdk";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -41,22 +41,26 @@ export function CallView({ meetingId, onLeave }: CallViewProps) {
           (error as { message?: string })?.message ?? JSON.stringify(error),
       });
     },
-    onWebcamToggle: ({ peerId, webcamOn }) =>
-      console.log("[VideoSDK webcam toggle]", { peerId, webcamOn }),
   });
 
-  // Join once when the provider is ready.
+  // Join exactly once (the ref guards against StrictMode's double-invoke in dev,
+  // which would otherwise join twice and duplicate participant tiles).
+  const hasJoinedRef = useRef(false);
   useEffect(() => {
+    if (hasJoinedRef.current) return;
+    hasJoinedRef.current = true;
     join();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // participants from useMeeting excludes the local user; show your tile first.
+  // One unique tile per present participant; your own tile first. VideoSDK's
+  // `participants` map excludes the local user and drops anyone who leaves, so the
+  // grid self-updates on join/leave.
   const participantIds = useMemo(() => {
-    const remoteIds = [...participants.keys()].filter(
-      (id) => id !== localParticipant?.id,
-    );
-    return localParticipant ? [localParticipant.id, ...remoteIds] : remoteIds;
+    const ids = new Set<string>();
+    if (localParticipant?.id) ids.add(localParticipant.id);
+    for (const id of participants.keys()) ids.add(id);
+    return [...ids];
   }, [participants, localParticipant]);
 
   const localStream = useLocalWebcamStream();
@@ -86,26 +90,29 @@ export function CallView({ meetingId, onLeave }: CallViewProps) {
         />
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-[1fr_320px]">
-        <div className="relative">
-          <ParticipantGrid participantIds={participantIds} />
-          {recognitionOn && (
-            <CaptionBar
-              latest={recognition.latest}
-              isSigning={recognition.isSigning}
-              className="absolute inset-x-0 bottom-4"
-            />
-          )}
-        </div>
+      <div className="grid items-stretch gap-4 lg:grid-cols-[1fr_320px]">
+        <ParticipantGrid participantIds={participantIds} />
 
-        <div className="h-[60vh] lg:h-auto">
-          <TranscriptPanel
-            transcript={recognition.transcript}
-            sentence={recognition.sentence}
-            onClear={recognition.clearTranscript}
-          />
+        {/* Matches the grid's height: fills it via an overlay on lg (so a long
+            transcript scrolls inside instead of stretching the row), fixed height
+            when stacked on mobile. */}
+        <div className="relative h-[50vh] min-h-0 lg:h-auto">
+          <div className="inset-0 h-full lg:absolute">
+            <TranscriptPanel
+              transcript={recognition.transcript}
+              sentence={recognition.sentence}
+              onClear={recognition.clearTranscript}
+            />
+          </div>
         </div>
       </div>
+
+      {recognitionOn && (
+        <CaptionBar
+          latest={recognition.latest}
+          isSigning={recognition.isSigning}
+        />
+      )}
 
       <CallControls
         micOn={localMicOn}

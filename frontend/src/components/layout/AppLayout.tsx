@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 
 import { useAuth } from "@/auth/AuthContext";
+import { useChatRealtime } from "@/hooks/useChatRealtime";
 import { CallSignalingProvider } from "@/realtime/CallSignalingProvider";
 import { UserAvatar } from "@/components/common/UserAvatar";
 import { Button } from "@/components/ui/button";
@@ -34,6 +35,9 @@ const NAV_ITEMS = [
 export function AppLayout() {
   const { session, logout } = useAuth();
   const navigate = useNavigate();
+
+  // Refetch chats instantly when a participant sends/edits/deletes a message.
+  useChatRealtime();
 
   const handleLogout = () => {
     logout();

@@ -18,6 +18,27 @@ class MessageSocket {
     //on db update (via an event), update the map/list
     this.#databaseCachedChats = MessageSocketUtils.cacheChats();
     this.messageEvent(socket, userSocketMap);
+    this.chatActivityRelay(socket, userSocketMap);
+  }
+
+  // Relay-only signal: REST persists the message; this just tells the recipients
+  // their chat changed so they refetch instantly instead of waiting for a poll.
+  chatActivityRelay(socket, userSocketMap) {
+    socket.on("chat-activity", (data) => {
+      const chatId = data?.chatId;
+      const targetPhoneNumbers = data?.targetPhoneNumbers ?? [];
+
+      if (chatId == null || targetPhoneNumbers.length === 0) {
+        return;
+      }
+
+      targetPhoneNumbers.forEach((targetPhoneNumber) => {
+        const targetSocketId = userSocketMap.get(targetPhoneNumber);
+        if (targetSocketId != null) {
+          socket.to(targetSocketId).emit("chat-activity", { chatId });
+        }
+      });
+    });
   }
 
   async messageEvent(socket, userSocketMap) {

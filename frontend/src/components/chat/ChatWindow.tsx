@@ -30,7 +30,6 @@ export function ChatWindow({ chatId, chat, onBack }: ChatWindowProps) {
   const myId = session?.userId;
   const myPhone = session?.phoneNumber ?? "";
   const { data: history, isLoading } = useChatHistory(chatId, myPhone);
-  const actions = useMessageActions(myPhone, chatId);
   const { startCall } = useCallSignaling();
 
   const [draft, setDraft] = useState("");
@@ -58,6 +57,7 @@ export function ChatWindow({ chatId, chat, onBack }: ChatWindowProps) {
 
   const title = others.map((p) => p.name).join(", ") || "Chat";
   const targetPhones = others.map((p) => p.phoneNumber);
+  const actions = useMessageActions(myPhone, chatId, targetPhones);
 
   // Auto-scroll on new messages.
   useEffect(() => {

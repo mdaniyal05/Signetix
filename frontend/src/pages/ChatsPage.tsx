@@ -15,7 +15,7 @@ export function ChatsPage() {
   const activeChat = chats?.find((chat) => chat._id === chatId);
 
   return (
-    <div className="grid h-full grid-cols-1 sm:grid-cols-[320px_1fr]">
+    <div className="grid h-full min-h-0 grid-cols-1 overflow-hidden sm:grid-cols-[320px_1fr]">
       <div className={cn("h-full min-h-0", chatId && "hidden sm:block")}>
         <ChatList
           activeChatId={chatId}

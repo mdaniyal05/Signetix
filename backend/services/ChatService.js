@@ -168,6 +168,35 @@ class ChatService extends AbstractService {
     }
   }
 
+  // Direction-agnostic: returns the one chat whose full member set (mainUserId +
+  // participants) exactly equals memberIds, regardless of who created it. This keeps
+  // A->B and B->A in a single thread so no duplicate chats are made.
+  async findChatByMemberIds(memberIds, session = null) {
+    const idStrings = memberIds.map((id) => id.toString());
+
+    const candidates = await this.schemaModel
+      .find({
+        $and: idStrings.map((id) => ({
+          $or: [{ mainUserId: id }, { participants: id }],
+        })),
+      })
+      .session(session);
+
+    return (
+      candidates.find((chat) => {
+        const members = new Set([
+          chat.mainUserId.toString(),
+          ...chat.participants.map((participant) => participant.toString()),
+        ]);
+
+        return (
+          members.size === idStrings.length &&
+          idStrings.every((id) => members.has(id))
+        );
+      }) ?? null
+    );
+  }
+
   // Update lastActivity timestamp for a chat
   async updateChatActivity(chatId, session = null) {
     return await super.updateDocument(

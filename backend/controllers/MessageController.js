@@ -78,60 +78,53 @@ class MessageController {
       const targetUserIds = targetUsers.map((user) => user._id.toString());
       const mainUserId = mainUser._id.toString();
 
-      var chat = await ServiceFactory.getChatService.getDocumentByCustomFilters(
-        {
-          mainUserId: mainUserId,
-          participants: {
-            $all: targetUserIds,
-            $size: targetUsers.length,
-          },
-        }
-      );
-
-      // Determine the chat ID with proper null checking
       let chatId;
 
-      if (!chat) {
-        LoggerFactory.getApplicationLogger.info(
-          "Chat Doesnt Exist - initializing a new chat"
+      if (request.body.chatId) {
+        // Client has a chat open: send into exactly that thread (keeps both sides
+        // in one conversation and prevents creating a parallel chat).
+        const openChat = await ServiceFactory.getChatService.getDocumentById(
+          request.body.chatId
         );
 
-        const newChat = await ServiceFactory.getChatService.saveDocument({
-          mainUserId: mainUserId,
-          participants: targetUserIds,
-          lastActivity: new Date(), // Set initial lastActivity
-        });
-
-        // Check if newChat is an array or single object and extract ID accordingly
-        if (Array.isArray(newChat)) {
-          chatId = newChat[0]._id.toString();
-        } else if (newChat && newChat._id) {
-          chatId = newChat._id.toString();
-        } else {
-          return response.status(500).json({
-            error: "Failed to create chat - unexpected response format",
-          });
+        if (!openChat) {
+          return response.status(404).json({ error: "Chat not found" });
         }
-      } else {
-        // Check if chat is an array or single object and extract ID accordingly
-        if (Array.isArray(chat)) {
-          if (chat.length === 0) {
-            return response.status(404).json({
-              error: "No chat found with these participants",
-            });
-          }
 
-          chatId = chat[0]._id.toString();
-          // Update the chat's last activity timestamp
-          await ServiceFactory.getChatService.updateChatActivity(chatId);
-        } else if (chat && chat._id) {
-          chatId = chat._id.toString();
-          // Update the chat's last activity timestamp
+        const isSenderInChat =
+          openChat.mainUserId.toString() === mainUserId ||
+          openChat.participants.some((p) => p.toString() === mainUserId);
+
+        if (!isSenderInChat) {
+          return response
+            .status(403)
+            .json({ error: "User is not part of this chat" });
+        }
+
+        chatId = openChat._id.toString();
+        await ServiceFactory.getChatService.updateChatActivity(chatId);
+      } else {
+        // No open chat: reuse the existing one for this member set (any direction),
+        // else create it once.
+        const existingChat =
+          await ServiceFactory.getChatService.findChatByMemberIds([
+            mainUserId,
+            ...targetUserIds,
+          ]);
+
+        if (existingChat) {
+          chatId = existingChat._id.toString();
           await ServiceFactory.getChatService.updateChatActivity(chatId);
         } else {
-          return response.status(500).json({
-            error: "Retrieved chat has unexpected format",
+          const newChat = await ServiceFactory.getChatService.saveDocument({
+            mainUserId: mainUserId,
+            participants: targetUserIds,
+            lastActivity: new Date(),
           });
+
+          chatId = Array.isArray(newChat)
+            ? newChat[0]._id.toString()
+            : newChat._id.toString();
         }
       }
 
@@ -175,7 +168,9 @@ class MessageController {
       const message =
         await ServiceFactory.getMessageService.saveDocument(messageData);
 
-      return response.json(message);
+      const savedMessage = Array.isArray(message) ? message[0] : message;
+
+      return response.json(savedMessage);
     } catch (exception) {
       LoggerFactory.getApplicationLogger.error(
         `Exception in postMessage: ${exception.message}`

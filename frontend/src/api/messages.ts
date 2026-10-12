@@ -9,12 +9,15 @@ export const messagesApi = {
     targetUserPhoneNumbers: string[],
     message: string,
     replyToId?: string,
+    chatId?: string,
   ) =>
     api.post<Message & { chatId: string }>("/messages/create", {
       mainUserPhoneNumber,
       targetUserPhoneNumbers,
       message,
       replyToId,
+      // Sending into the open chat keeps both sides in one thread (no duplicate chat).
+      chatId,
     }),
 
   edit: (senderPhoneNumber: string, messageId: string, newContent: string) =>
