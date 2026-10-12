@@ -25,6 +25,7 @@ interface AuthContextValue {
   signup: (
     name: string,
     phoneNumber: string,
+    email: string,
     password: string,
   ) => Promise<void>;
   logout: () => void;
@@ -60,8 +61,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signup = useCallback(
-    async (name: string, phoneNumber: string, password: string) => {
-      const response = await authApi.signup(name, phoneNumber, password);
+    async (
+      name: string,
+      phoneNumber: string,
+      email: string,
+      password: string,
+    ) => {
+      const response = await authApi.signup(name, phoneNumber, email, password);
       const next = toSession(response);
       persistSession(next);
       setSessionState(next);

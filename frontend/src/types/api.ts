@@ -4,6 +4,7 @@ export interface User {
   _id: string;
   name: string;
   phoneNumber: string;
+  email?: string;
   profilePicture?: string;
   profileStatus?: string;
   createdAt?: string;

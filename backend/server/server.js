@@ -3,6 +3,7 @@ require("reflect-metadata");
 
 const express = require("express");
 const http = require("http");
+const cors = require("cors");
 
 const WebSocketManager = require("../managers/websocketManager.js");
 const EventFactory = require("../factories/eventFactory.js");
@@ -33,6 +34,8 @@ const twilioOtpRoutes = require("../routes/TwilioVerifyRoutes.js");
 const amazonS3Routes = require("../routes/AmazonS3Routes.js");
 const jwtRoutes = require("../routes/JwtRoutes.js");
 const authRoutes = require("../routes/AuthRoutes.js");
+const cloudinaryRoutes = require("../routes/CloudinaryRoutes.js");
+const resendVerifyRoutes = require("../routes/ResendVerifyRoutes.js");
 
 const mongoDburl = process.env.MONGO_DB_URL;
 const port = process.env.PORT;
@@ -82,6 +85,10 @@ async function setupSystem() {
 
     //Jwt Manager
     await setupJwtManager();
+
+    //Media (Cloudinary) + email OTP (Resend) providers — self-configure from env.
+    ManagerFactory.getCloudinaryManager();
+    ManagerFactory.getResendManager();
   } catch (exception) {
     LoggerFactory.getApplicationLogger.error(`Exception Occured ${exception}`);
 
@@ -93,8 +100,16 @@ function setupRoutes() {
   try {
     const SignetixApp = express();
 
-    SignetixApp.use(express.json());
-    SignetixApp.use(express.urlencoded({ extended: true }));
+    // Production hardening: don't advertise Express, trust the platform proxy (Render).
+    SignetixApp.disable("x-powered-by");
+    SignetixApp.set("trust proxy", 1);
+
+    // CORS for REST: allowlist via CORS_ALLOWED_ORIGINS (comma-separated); if unset,
+    // reflect the request origin (dev convenience).
+    SignetixApp.use(cors(buildCorsOptions()));
+
+    SignetixApp.use(express.json({ limit: "1mb" }));
+    SignetixApp.use(express.urlencoded({ extended: true, limit: "1mb" }));
 
     SignetixApp.get("/", (req, res) => {
       res.status(200);
@@ -120,6 +135,8 @@ function setupRoutes() {
     SignetixApp.use("/amazon", amazonS3Routes);
     SignetixApp.use("/jwt", jwtRoutes);
     SignetixApp.use("/auth", authRoutes);
+    SignetixApp.use("/cloudinary", cloudinaryRoutes);
+    SignetixApp.use("/resend", resendVerifyRoutes);
 
     return SignetixApp;
   } catch (exception) {
@@ -163,4 +180,17 @@ async function setupApplicationLogger(logLevel) {
 
 function getApplicationLogger() {
   return LoggerFactory.getApplicationLogger;
+}
+
+// REST CORS options: explicit allowlist in prod, reflect-origin in dev when unset.
+function buildCorsOptions() {
+  const allowedOrigins = (process.env.CORS_ALLOWED_ORIGINS ?? "")
+    .split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+
+  return {
+    origin: allowedOrigins.length > 0 ? allowedOrigins : true,
+    credentials: true,
+  };
 }

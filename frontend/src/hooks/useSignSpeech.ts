@@ -11,19 +11,32 @@ export const speechSupported = (): boolean =>
  * spoken entry id so a word is read exactly once, and never replays the backlog
  * when speech is toggled on. No-ops when disabled or unsupported.
  */
+/** Ignore a repeat of the same word within this window (coalesces duplicate
+ *  predictions / a sign split into two so it's spoken once). */
+const SAME_WORD_COOLDOWN_MS = 1500;
+
 export function useSignSpeech(
   latest: TranscriptEntry | null,
   enabled: boolean,
 ): void {
   const lastSpokenId = useRef<string | null>(null);
+  const lastSpoken = useRef<{ word: string; at: number }>({ word: "", at: 0 });
 
   useEffect(() => {
     if (!latest) return;
 
-    const isNewWord = lastSpokenId.current !== latest.id;
+    const isNewEntry = lastSpokenId.current !== latest.id;
     lastSpokenId.current = latest.id; // mark seen even when muted, so toggling on won't replay
 
-    if (!enabled || !isNewWord || !speechSupported()) return;
+    if (!enabled || !isNewEntry || !speechSupported()) return;
+
+    // Skip a repeat of the same word fired in quick succession.
+    const now = Date.now();
+    const isDuplicate =
+      lastSpoken.current.word === latest.word &&
+      now - lastSpoken.current.at < SAME_WORD_COOLDOWN_MS;
+    if (isDuplicate) return;
+    lastSpoken.current = { word: latest.word, at: now };
 
     const utterance = new SpeechSynthesisUtterance(
       latest.word.replace(/_/g, " "),

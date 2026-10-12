@@ -16,6 +16,10 @@ class ControllerConstants {
 
   static TWILIO_VERIFY_CHANNEL = "sms";
 
+  // Email OTP (Resend): 6 digits, valid for 10 minutes.
+  static OTP_CODE_LENGTH = 6;
+  static OTP_EXPIRY_IN_MS = 10 * 60 * 1000;
+
   static ACCESSIBILITY_SETTINGS_PSL_TRANSLATE_DICT = {
     English: 0,
     Urdu: 1,

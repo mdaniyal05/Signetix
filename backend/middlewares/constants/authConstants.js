@@ -7,6 +7,8 @@ class AuthConstants {
   static UPDATE_USER = "/users/update";
 
   static TWILIO_GET = "/twilio/getOtp";
+  static RESEND_GET = "/resend/getOtp";
+  static RESEND_VERIFY = "/resend/verifyOtp";
   static FIRST = 1;
   static UNAUTHORIZED = 401;
   static ZERO = 0;

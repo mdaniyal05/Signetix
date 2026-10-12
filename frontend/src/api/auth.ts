@@ -7,10 +7,11 @@ export const authApi = {
   login: (phoneNumber: string, password: string) =>
     api.post<AuthResponse>("/auth/users/login", { phoneNumber, password }),
 
-  signup: (name: string, phoneNumber: string, password: string) =>
+  signup: (name: string, phoneNumber: string, email: string, password: string) =>
     api.post<AuthResponse>("/auth/users/create", {
       name,
       phoneNumber,
+      email,
       password,
     }),
 

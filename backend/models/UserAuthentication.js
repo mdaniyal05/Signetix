@@ -8,6 +8,9 @@ const UserAuthenticationSchema = new mongoose.Schema({
   },
   isVerified: { type: Boolean, required: true, default: false },
   refreshToken: { type: String },
+  // Email OTP (Resend) — code + its expiry, cleared once verified.
+  otpCode: { type: String },
+  otpExpiresAt: { type: Date },
   createdAt: { type: Date, required: true, default: Date.now },
   updatedAt: { type: Date, required: true, default: Date.now },
 });

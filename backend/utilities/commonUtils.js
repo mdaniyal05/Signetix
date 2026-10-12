@@ -33,6 +33,14 @@ class CommonUtils {
   static async generateUuid() {
     return Uuid.v4();
   }
+
+  // Zero-padded numeric string of the given length (e.g. a 6-digit OTP).
+  static async generateNumericCode(length) {
+    const max = 10 ** length;
+    return Math.floor(Math.random() * max)
+      .toString()
+      .padStart(length, "0");
+  }
 }
 
 module.exports = CommonUtils;

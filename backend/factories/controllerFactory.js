@@ -15,6 +15,8 @@ const UserAuthenticationController = require("../controllers/UserAuthenticationC
 const TwilioOtpController = require("../controllers/TwilioOtpController.js");
 const AmazonS3Controller = require("../controllers/AmazonS3Controller.js");
 const JwtController = require("../controllers/JwtController.js");
+const CloudinaryController = require("../controllers/CloudinaryController.js");
+const ResendOtpController = require("../controllers/ResendOtpController.js");
 
 class ControllerFactory {
   /**
@@ -81,6 +83,18 @@ class ControllerFactory {
    * @type {JwtController | null}
    */
   static #jwtController = null;
+
+  /**
+   * @private
+   * @type {CloudinaryController | null}
+   */
+  static #cloudinaryController = null;
+
+  /**
+   * @private
+   * @type {ResendOtpController | null}
+   */
+  static #resendOtpController = null;
 
   constructor() {}
 
@@ -160,6 +174,20 @@ class ControllerFactory {
       ControllerFactory.#jwtController = new JwtController();
     }
     return ControllerFactory.#jwtController;
+  }
+
+  static getCloudinaryController() {
+    if (!ControllerFactory.#cloudinaryController) {
+      ControllerFactory.#cloudinaryController = new CloudinaryController();
+    }
+    return ControllerFactory.#cloudinaryController;
+  }
+
+  static getResendOtpController() {
+    if (!ControllerFactory.#resendOtpController) {
+      ControllerFactory.#resendOtpController = new ResendOtpController();
+    }
+    return ControllerFactory.#resendOtpController;
   }
 }
 

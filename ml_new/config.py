@@ -77,5 +77,7 @@ MIN_PER_WORD_ACCURACY: float = 0.60
 
 # Real-time inference (segment-on-rest, mirrors training).
 INFERENCE_CONFIDENCE_THRESHOLD: float = 0.60
-INFERENCE_REST_MIN_DURATION_SEC: float = 0.4
+# Longer than the training segmentation rest so brief live hand-tracking dropouts
+# (motion blur / occlusion) don't split one sign into two; real rests are ~1s.
+INFERENCE_REST_MIN_DURATION_SEC: float = 0.7
 INFERENCE_MIN_SIGN_FRAMES: int = 5

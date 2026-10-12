@@ -21,12 +21,14 @@ export function SignupPage() {
 
   const [name, setName] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   const canSubmit =
     name.trim().length > 0 &&
     phoneNumber.trim().length > 0 &&
+    /.+@.+\..+/.test(email.trim()) &&
     password.length >= 6;
 
   const handleSubmit = async (event: FormEvent) => {
@@ -34,7 +36,7 @@ export function SignupPage() {
     if (!canSubmit) return;
     setSubmitting(true);
     try {
-      await signup(name.trim(), phoneNumber.trim(), password);
+      await signup(name.trim(), phoneNumber.trim(), email.trim(), password);
       navigate("/", { replace: true });
     } catch (error) {
       toast.error("Sign up failed", {
@@ -77,6 +79,17 @@ export function SignupPage() {
                 placeholder="+1234567890"
                 value={phoneNumber}
                 onChange={(event) => setPhoneNumber(event.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                autoComplete="email"
+                placeholder="you@example.com"
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
               />
             </div>
             <div className="space-y-2">

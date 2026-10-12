@@ -6,8 +6,14 @@ const Socket = require("../webSockets/socket.js");
 
 class WebSocketManager {
   constructor(server) {
+    // Match the REST allowlist (CORS_ALLOWED_ORIGINS); "*" only when none is set.
+    const allowedOrigins = (process.env.CORS_ALLOWED_ORIGINS ?? "")
+      .split(",")
+      .map((origin) => origin.trim())
+      .filter(Boolean);
+
     this.signetixSocketIo = socketIo(server, {
-      cors: { origin: "*" },
+      cors: { origin: allowedOrigins.length > 0 ? allowedOrigins : "*" },
     });
 
     this.userSocketMap = new Map();

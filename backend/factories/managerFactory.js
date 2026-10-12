@@ -6,6 +6,8 @@
 const AwsS3Manager = require("../managers/Aws/awsS3Manager.js");
 const TwilioManager = require("../managers/twilio/twilioManager.js");
 const JwtManager = require("../managers/jwt/jwtManager.js");
+const CloudinaryManager = require("../managers/cloudinary/cloudinaryManager.js");
+const ResendManager = require("../managers/resend/resendManager.js");
 
 class ManagerFactory {
   /**
@@ -26,6 +28,18 @@ class ManagerFactory {
    */
   static #jwtManager = null;
 
+  /**
+   * @private
+   * @type {CloudinaryManager | null}
+   */
+  static #cloudinaryManager = null;
+
+  /**
+   * @private
+   * @type {ResendManager | null}
+   */
+  static #resendManager = null;
+
   static getAwsS3Manager() {
     if (!ManagerFactory.#awsS3Manager) {
       ManagerFactory.#awsS3Manager = new AwsS3Manager();
@@ -45,6 +59,20 @@ class ManagerFactory {
       ManagerFactory.#jwtManager = new JwtManager();
     }
     return ManagerFactory.#jwtManager;
+  }
+
+  static getCloudinaryManager() {
+    if (!ManagerFactory.#cloudinaryManager) {
+      ManagerFactory.#cloudinaryManager = new CloudinaryManager();
+    }
+    return ManagerFactory.#cloudinaryManager;
+  }
+
+  static getResendManager() {
+    if (!ManagerFactory.#resendManager) {
+      ManagerFactory.#resendManager = new ResendManager();
+    }
+    return ManagerFactory.#resendManager;
   }
 }
 

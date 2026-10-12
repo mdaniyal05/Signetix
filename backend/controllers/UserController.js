@@ -200,6 +200,15 @@ class UserController {
 
       if (phoneNumberValidation) return phoneNumberValidation;
 
+      const emailValidation = await ExceptionHelper.validate(
+        newUser.email,
+        400,
+        `email is not provided (required for OTP verification).`,
+        response
+      );
+
+      if (emailValidation) return emailValidation;
+
       const passwordValidation = await ExceptionHelper.validate(
         newUser.password,
         400,
