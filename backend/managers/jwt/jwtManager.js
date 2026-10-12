@@ -40,11 +40,20 @@ class JwtManager {
     );
   }
 
+  #expirationInSeconds(days) {
+    const numericDays = Number(days);
+    return Number.isFinite(numericDays) ? numericDays * 86400 : days;
+  }
+
   async generateAccessToken(userId) {
     const accessToken = JsonWebToken.sign(
       { userId },
       this.#jwtDto.accessTokenSecret,
-      { expiresIn: this.#jwtDto.accessTokenExpirationTime }
+      {
+        expiresIn: this.#expirationInSeconds(
+          this.#jwtDto.accessTokenExpirationTime
+        ),
+      }
     );
 
     LoggerFactory.getApplicationLogger.info(
@@ -58,7 +67,11 @@ class JwtManager {
     const refreshToken = JsonWebToken.sign(
       { userId },
       this.#jwtDto.refreshTokenSecret,
-      { expiresIn: this.#jwtDto.refreshTokenExpirationTime }
+      {
+        expiresIn: this.#expirationInSeconds(
+          this.#jwtDto.refreshTokenExpirationTime
+        ),
+      }
     );
 
     LoggerFactory.getApplicationLogger.info(

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useMeeting } from "@videosdk.live/react-sdk";
 import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 import { CaptionBar } from "@/components/recognition/CaptionBar";
 import { RecognitionStatus } from "@/components/recognition/RecognitionStatus";
@@ -26,11 +27,22 @@ export function CallView({ meetingId, onLeave }: CallViewProps) {
     toggleMic,
     toggleWebcam,
     participants,
+    localParticipant,
     localMicOn,
     localWebcamOn,
   } = useMeeting({
     onMeetingJoined: () => setJoined(true),
     onMeetingLeft: onLeave,
+    // Surface the real reason the camera/mic fails instead of failing silently.
+    onError: (error) => {
+      console.error("[VideoSDK error]", error);
+      toast.error("Video call error", {
+        description:
+          (error as { message?: string })?.message ?? JSON.stringify(error),
+      });
+    },
+    onWebcamToggle: ({ peerId, webcamOn }) =>
+      console.log("[VideoSDK webcam toggle]", { peerId, webcamOn }),
   });
 
   // Join once when the provider is ready.
@@ -39,10 +51,13 @@ export function CallView({ meetingId, onLeave }: CallViewProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const participantIds = useMemo(
-    () => [...participants.keys()],
-    [participants],
-  );
+  // participants from useMeeting excludes the local user; show your tile first.
+  const participantIds = useMemo(() => {
+    const remoteIds = [...participants.keys()].filter(
+      (id) => id !== localParticipant?.id,
+    );
+    return localParticipant ? [localParticipant.id, ...remoteIds] : remoteIds;
+  }, [participants, localParticipant]);
 
   const localStream = useLocalWebcamStream();
   const recognition = usePslRecognition({
@@ -96,10 +111,10 @@ export function CallView({ meetingId, onLeave }: CallViewProps) {
         micOn={localMicOn}
         webcamOn={localWebcamOn}
         recognitionOn={recognitionOn}
-        onToggleMic={toggleMic}
-        onToggleWebcam={toggleWebcam}
+        onToggleMic={() => toggleMic()}
+        onToggleWebcam={() => toggleWebcam()}
         onToggleRecognition={setRecognitionOn}
-        onLeave={leave}
+        onLeave={() => leave()}
       />
     </div>
   );
