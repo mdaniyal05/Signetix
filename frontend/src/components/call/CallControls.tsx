@@ -1,4 +1,13 @@
-import { Mic, MicOff, PhoneOff, Video, VideoOff, Captions } from "lucide-react";
+import {
+  Mic,
+  MicOff,
+  PhoneOff,
+  Video,
+  VideoOff,
+  Captions,
+  Volume2,
+  VolumeX,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -8,9 +17,12 @@ interface CallControlsProps {
   micOn: boolean;
   webcamOn: boolean;
   recognitionOn: boolean;
+  speechOn: boolean;
+  speechSupported: boolean;
   onToggleMic: () => void;
   onToggleWebcam: () => void;
   onToggleRecognition: (value: boolean) => void;
+  onToggleSpeech: () => void;
   onLeave: () => void;
 }
 
@@ -18,9 +30,12 @@ export function CallControls({
   micOn,
   webcamOn,
   recognitionOn,
+  speechOn,
+  speechSupported,
   onToggleMic,
   onToggleWebcam,
   onToggleRecognition,
+  onToggleSpeech,
   onLeave,
 }: CallControlsProps) {
   return (
@@ -53,6 +68,23 @@ export function CallControls({
           onCheckedChange={onToggleRecognition}
         />
       </div>
+
+      <Button
+        variant={speechOn ? "secondary" : "outline"}
+        size="icon"
+        onClick={onToggleSpeech}
+        disabled={!speechSupported}
+        aria-label={speechOn ? "Mute spoken signs" : "Speak signs aloud"}
+        title={
+          speechSupported
+            ? speechOn
+              ? "Mute spoken signs"
+              : "Speak signs aloud"
+            : "Text-to-speech not supported in this browser"
+        }
+      >
+        {speechOn ? <Volume2 /> : <VolumeX />}
+      </Button>
 
       <Button variant="destructive" onClick={onLeave}>
         <PhoneOff />

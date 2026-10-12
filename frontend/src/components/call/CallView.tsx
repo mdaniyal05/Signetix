@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useMeeting } from "@videosdk.live/react-sdk";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -8,6 +8,7 @@ import { RecognitionStatus } from "@/components/recognition/RecognitionStatus";
 import { TranscriptPanel } from "@/components/recognition/TranscriptPanel";
 import { useLocalWebcamStream } from "@/hooks/useLocalWebcamStream";
 import { usePslRecognition } from "@/hooks/usePslRecognition";
+import { useSignSpeech, speechSupported } from "@/hooks/useSignSpeech";
 import { CallControls } from "./CallControls";
 import { ParticipantGrid } from "./ParticipantGrid";
 
@@ -20,6 +21,7 @@ interface CallViewProps {
 export function CallView({ meetingId, onLeave }: CallViewProps) {
   const [joined, setJoined] = useState(false);
   const [recognitionOn, setRecognitionOn] = useState(true);
+  const [speechOn, setSpeechOn] = useState(true);
 
   const {
     join,
@@ -43,12 +45,10 @@ export function CallView({ meetingId, onLeave }: CallViewProps) {
     },
   });
 
-  // Join exactly once (the ref guards against StrictMode's double-invoke in dev,
-  // which would otherwise join twice and duplicate participant tiles).
-  const hasJoinedRef = useRef(false);
+  // Join when the provider is ready (VideoSDK's documented pattern). Duplicate
+  // tiles are prevented by the de-duplicated id Set below, not by guarding join —
+  // guarding it breaks joining under StrictMode's dev remount.
   useEffect(() => {
-    if (hasJoinedRef.current) return;
-    hasJoinedRef.current = true;
     join();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -68,6 +68,9 @@ export function CallView({ meetingId, onLeave }: CallViewProps) {
     stream: localStream,
     enabled: recognitionOn && localWebcamOn,
   });
+
+  // Speak each newly recognized sign out loud (when enabled).
+  useSignSpeech(recognition.latest, speechOn && recognitionOn);
 
   if (!joined) {
     return (
@@ -118,9 +121,12 @@ export function CallView({ meetingId, onLeave }: CallViewProps) {
         micOn={localMicOn}
         webcamOn={localWebcamOn}
         recognitionOn={recognitionOn}
+        speechOn={speechOn}
+        speechSupported={speechSupported()}
         onToggleMic={() => toggleMic()}
         onToggleWebcam={() => toggleWebcam()}
         onToggleRecognition={setRecognitionOn}
+        onToggleSpeech={() => setSpeechOn((on) => !on)}
         onLeave={() => leave()}
       />
     </div>
