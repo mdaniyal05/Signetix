@@ -27,7 +27,7 @@ import {
 import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
-  { to: "/", label: "Dashboard", icon: LayoutDashboard, end: true },
+  { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard, end: true },
   { to: "/chats", label: "Chats", icon: MessageSquare, end: false },
   { to: "/contacts", label: "Contacts", icon: Users, end: false },
   { to: "/history", label: "Calls", icon: PhoneCall, end: false },
