@@ -86,7 +86,7 @@ export function VerifyEmailPage() {
           <img
             src="/logo.png"
             alt="Signetix"
-            className="mx-auto mb-2 size-14 object-contain dark:brightness-0 dark:invert"
+            className="mx-auto mb-2 h-20 w-auto object-contain dark:brightness-0 dark:invert"
           />
           <CardTitle className="text-2xl">Verify your email</CardTitle>
           <CardDescription>

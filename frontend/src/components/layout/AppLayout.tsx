@@ -54,7 +54,7 @@ export function AppLayout() {
             <img
               src="/logo.png"
               alt="Signetix"
-              className="size-11 object-contain dark:brightness-0 dark:invert"
+              className="h-12 w-auto object-contain dark:brightness-0 dark:invert"
             />
           </div>
           <nav className="flex-1 space-y-1 p-3">

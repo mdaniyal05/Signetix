@@ -48,7 +48,7 @@ export function LoginPage() {
           <img
             src="/logo.png"
             alt="Signetix"
-            className="mx-auto mb-2 size-14 object-contain dark:brightness-0 dark:invert"
+            className="mx-auto mb-2 h-20 w-auto object-contain dark:brightness-0 dark:invert"
           />
           <CardTitle className="text-2xl">Welcome back</CardTitle>
           <CardDescription>Sign in to your Signetix account</CardDescription>

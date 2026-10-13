@@ -78,7 +78,7 @@ export function LandingPage() {
       <header className="sticky top-0 z-20 border-b border-white/5 bg-[#0c0021]/70 backdrop-blur-xl">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
           <Link to="/" className="flex items-center">
-            <img src="/logo.png" alt="Signetix" className="size-11 object-contain brightness-0 invert" />
+            <img src="/logo.png" alt="Signetix" className="h-14 w-auto object-contain brightness-0 invert" />
           </Link>
           <nav className="flex items-center gap-2">
             <Button asChild variant="ghost" className="text-white/80 hover:bg-white/10 hover:text-white">
@@ -197,7 +197,7 @@ export function LandingPage() {
       {/* Footer */}
       <footer className="border-t border-white/5">
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-4 py-8 text-sm text-[#c4a1ff]/70 sm:flex-row sm:px-6">
-          <img src="/logo.png" alt="Signetix" className="size-8 object-contain brightness-0 invert" />
+          <img src="/logo.png" alt="Signetix" className="h-10 w-auto object-contain brightness-0 invert" />
           <span>© {CURRENT_YEAR} Signetix. All rights reserved.</span>
         </div>
       </footer>
