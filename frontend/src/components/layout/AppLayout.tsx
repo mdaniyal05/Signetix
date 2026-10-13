@@ -50,13 +50,12 @@ export function AppLayout() {
     <CallSignalingProvider>
       <div className="flex h-screen bg-muted/30">
         <aside className="hidden w-64 shrink-0 flex-col border-r bg-background sm:flex">
-          <div className="flex h-16 items-center gap-2 border-b px-6">
+          <div className="flex h-16 items-center border-b px-6">
             <img
               src="/logo.png"
               alt="Signetix"
-              className="size-8 object-contain dark:brightness-0 dark:invert"
+              className="size-11 object-contain dark:brightness-0 dark:invert"
             />
-            <span className="text-lg font-semibold">Signetix</span>
           </div>
           <nav className="flex-1 space-y-1 p-3">
             {NAV_ITEMS.map(({ to, label, icon: Icon, end }) => (
