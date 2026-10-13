@@ -5,10 +5,11 @@ import {
   useState,
   type KeyboardEvent,
 } from "react";
-import { ArrowLeft, Loader2, Phone, Send, Video, X } from "lucide-react";
+import { ArrowLeft, Loader2, Paperclip, Phone, Send, Video, X } from "lucide-react";
 import { toast } from "sonner";
 
 import { useAuth } from "@/auth/AuthContext";
+import { cloudinaryApi } from "@/api/cloudinary";
 import { UserAvatar } from "@/components/common/UserAvatar";
 import { MessageBubble } from "@/components/chat/MessageBubble";
 import { Button } from "@/components/ui/button";
@@ -17,6 +18,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useChatHistory } from "@/hooks/useChats";
 import { useMessageActions } from "@/hooks/useMessages";
 import { useCallSignaling } from "@/realtime/CallSignalingProvider";
+import { usePresence } from "@/realtime/PresenceContext";
 import type { Chat, Message, UserRef } from "@/types/api";
 
 interface ChatWindowProps {
@@ -31,11 +33,14 @@ export function ChatWindow({ chatId, chat, onBack }: ChatWindowProps) {
   const myPhone = session?.phoneNumber ?? "";
   const { data: history, isLoading } = useChatHistory(chatId, myPhone);
   const { startCall } = useCallSignaling();
+  const { isOnline } = usePresence();
 
   const [draft, setDraft] = useState("");
   const [replyTo, setReplyTo] = useState<Message | null>(null);
+  const [uploading, setUploading] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const markedRef = useRef<Set<string>>(new Set());
+  const attachInputRef = useRef<HTMLInputElement>(null);
 
   const messages = useMemo(() => history?.messages ?? [], [history]);
 
@@ -58,6 +63,7 @@ export function ChatWindow({ chatId, chat, onBack }: ChatWindowProps) {
   const title = others.map((p) => p.name).join(", ") || "Chat";
   const targetPhones = others.map((p) => p.phoneNumber);
   const actions = useMessageActions(myPhone, chatId, targetPhones);
+  const anyOnline = others.some((p) => isOnline(p.phoneNumber));
 
   // Auto-scroll on new messages.
   useEffect(() => {
@@ -104,6 +110,32 @@ export function ChatWindow({ chatId, chat, onBack }: ChatWindowProps) {
     setReplyTo(null);
   };
 
+  const handleAttach = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+    if (targetPhones.length === 0) {
+      toast.error("No recipients found for this chat");
+      return;
+    }
+    setUploading(true);
+    try {
+      const mediaUrl = await cloudinaryApi.uploadMedia(myPhone, file);
+      actions.send.mutate({
+        targetUserPhoneNumbers: targetPhones,
+        message: draft.trim(),
+        media: { mediaUrl, mediaType: file.type },
+      });
+      setDraft("");
+    } catch (error) {
+      toast.error("Attachment failed to send", {
+        description: error instanceof Error ? error.message : undefined,
+      });
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const handleKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
     if (event.key === "Enter" && !event.shiftKey) {
       event.preventDefault();
@@ -132,7 +164,11 @@ export function ChatWindow({ chatId, chat, onBack }: ChatWindowProps) {
         <div className="min-w-0 flex-1">
           <p className="truncate font-medium">{title}</p>
           <p className="truncate text-xs text-muted-foreground">
-            {others.map((p) => p.phoneNumber).join(", ")}
+            {anyOnline ? (
+              <span className="text-green-600 dark:text-green-500">Online</span>
+            ) : (
+              others.map((p) => p.phoneNumber).join(", ")
+            )}
           </p>
         </div>
         <Button
@@ -202,6 +238,22 @@ export function ChatWindow({ chatId, chat, onBack }: ChatWindowProps) {
       )}
 
       <div className="flex items-end gap-2 border-t bg-background p-3">
+        <input
+          ref={attachInputRef}
+          type="file"
+          accept="image/*,video/*"
+          className="hidden"
+          onChange={handleAttach}
+        />
+        <Button
+          size="icon"
+          variant="ghost"
+          onClick={() => attachInputRef.current?.click()}
+          disabled={uploading || targetPhones.length === 0}
+          aria-label="Attach file"
+        >
+          {uploading ? <Loader2 className="animate-spin" /> : <Paperclip />}
+        </Button>
         <Textarea
           value={draft}
           onChange={(event) => setDraft(event.target.value)}

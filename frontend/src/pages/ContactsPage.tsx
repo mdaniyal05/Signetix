@@ -35,6 +35,7 @@ import {
 } from "@/hooks/useContacts";
 import { useCreateChat } from "@/hooks/useChats";
 import { useCallSignaling } from "@/realtime/CallSignalingProvider";
+import { usePresence } from "@/realtime/PresenceContext";
 
 export function ContactsPage() {
   const { session } = useAuth();
@@ -44,6 +45,7 @@ export function ContactsPage() {
   const removeContact = useRemoveContact(phone ?? "");
   const createChat = useCreateChat(phone ?? "");
   const { startCall } = useCallSignaling();
+  const { isOnline } = usePresence();
 
   const existingPhones = useMemo(
     () => (contacts ?? []).map((c) => c.contactUserId.phoneNumber),
@@ -100,10 +102,15 @@ export function ContactsPage() {
         <ul className="divide-y rounded-xl border bg-card">
           {contacts.map((contact) => (
             <li key={contact._id} className="flex items-center gap-3 p-3">
-              <UserAvatar
-                name={contact.contactUserId.name}
-                src={contact.contactUserId.profilePicture}
-              />
+              <div className="relative shrink-0">
+                <UserAvatar
+                  name={contact.contactUserId.name}
+                  src={contact.contactUserId.profilePicture}
+                />
+                {isOnline(contact.contactUserId.phoneNumber) && (
+                  <span className="absolute bottom-0 right-0 size-3 rounded-full border-2 border-background bg-green-500" />
+                )}
+              </div>
               <div className="min-w-0 flex-1">
                 <p className="truncate font-medium">
                   {contact.contactUserId.name}

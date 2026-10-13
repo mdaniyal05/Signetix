@@ -19,6 +19,7 @@ class WebSocketManager {
     this.userSocketMap = new Map();
     this.callSocketMap = new Map();
     this.meetingParticipantMap = new Map();
+    this.onlineUsers = new Set(); // phone numbers currently connected
 
     this.setupSocketEvents(
       this.userSocketMap,
@@ -38,6 +39,8 @@ class WebSocketManager {
         meetingParticipantMap
       );
 
+      this.presenceEvents(socket);
+
       //global disconnect event
       this.socketDisconnectEvent(
         socket,
@@ -45,6 +48,24 @@ class WebSocketManager {
         callSocketMap,
         meetingParticipantMap
       );
+    });
+  }
+
+  // Online/offline presence: broadcast on register/disconnect, send the current list on join.
+  presenceEvents(socket) {
+    socket.on("socket-registration", (data) => {
+      const phoneNumber = data?.userPhoneNumber;
+      if (phoneNumber == null) return;
+
+      socket.data.userPhoneNumber = phoneNumber;
+      this.onlineUsers.add(phoneNumber);
+
+      socket.emit("presence-state", { online: [...this.onlineUsers] });
+      socket.broadcast.emit("presence-update", { phoneNumber, online: true });
+    });
+
+    socket.on("presence-request", () => {
+      socket.emit("presence-state", { online: [...this.onlineUsers] });
     });
   }
 
@@ -67,6 +88,17 @@ class WebSocketManager {
         callSocketMap,
         meetingParticipantMap
       );
+
+      // Mark the user offline and tell everyone else.
+      const phoneNumber = socket.data?.userPhoneNumber;
+      if (phoneNumber != null) {
+        this.onlineUsers.delete(phoneNumber);
+        userSocketMap.delete(phoneNumber);
+        socket.broadcast.emit("presence-update", {
+          phoneNumber,
+          online: false,
+        });
+      }
     });
   }
 }

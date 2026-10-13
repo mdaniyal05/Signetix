@@ -20,7 +20,10 @@ const MessageSchema = new mongoose.Schema({
     required: false,
   }, //Media table - foreign key
   messageType: { type: String },
-  content: { type: String, required: true },
+  // Optional attachment hosted on Cloudinary (image/video/file).
+  mediaUrl: { type: String },
+  mediaType: { type: String },
+  content: { type: String, default: "" },
   status: { type: Boolean }, //delivered or not
   createdAt: { type: Date, required: true, default: Date.now },
   updatedAt: { type: Date, required: true, default: Date.now },

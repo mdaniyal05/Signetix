@@ -1,9 +1,11 @@
-import { useEffect, useState, type ReactNode } from "react";
-import { Loader2 } from "lucide-react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import { Camera, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { useAuth } from "@/auth/AuthContext";
 import { usersApi } from "@/api/users";
+import { cloudinaryApi } from "@/api/cloudinary";
+import { UserAvatar } from "@/components/common/UserAvatar";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -145,6 +147,31 @@ export function SettingsPage() {
   function ProfileCard() {
     const [name, setName] = useState(session?.name ?? "");
     const [saving, setSaving] = useState(false);
+    const [uploadingPhoto, setUploadingPhoto] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const onPickPhoto = async (event: React.ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0];
+      event.target.value = ""; // allow re-selecting the same file
+      if (!file) return;
+      if (!file.type.startsWith("image/")) {
+        toast.error("Please choose an image file");
+        return;
+      }
+      setUploadingPhoto(true);
+      try {
+        const url = await cloudinaryApi.uploadProfilePicture(phone, file);
+        await usersApi.update({ phoneNumber: phone, profilePicture: url });
+        patchSession({ profilePicture: url });
+        toast.success("Photo updated");
+      } catch (error) {
+        toast.error("Could not update photo", {
+          description: error instanceof Error ? error.message : undefined,
+        });
+      } finally {
+        setUploadingPhoto(false);
+      }
+    };
 
     const save = async () => {
       if (!name.trim()) return;
@@ -169,6 +196,38 @@ export function SettingsPage() {
           <CardDescription>Your public information</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
+          <div className="flex items-center gap-4">
+            <div className="relative">
+              <UserAvatar
+                name={session?.name ?? "User"}
+                src={session?.profilePicture}
+                className="size-16"
+              />
+              {uploadingPhoto && (
+                <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/50">
+                  <Loader2 className="size-5 animate-spin text-white" />
+                </div>
+              )}
+            </div>
+            <div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={onPickPhoto}
+              />
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploadingPhoto}
+              >
+                <Camera className="size-4" />
+                Change photo
+              </Button>
+            </div>
+          </div>
           <div className="space-y-2">
             <Label htmlFor="profile-name">Name</Label>
             <Input

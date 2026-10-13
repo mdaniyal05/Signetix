@@ -39,6 +39,7 @@ export function useMessageActions(
       targetUserPhoneNumbers: string[];
       message: string;
       replyToId?: string;
+      media?: { mediaUrl: string; mediaType: string };
     }) =>
       messagesApi.create(
         phoneNumber,
@@ -46,6 +47,7 @@ export function useMessageActions(
         vars.message,
         vars.replyToId,
         chatId,
+        vars.media,
       ),
     onSuccess: notifyAndInvalidate,
   });

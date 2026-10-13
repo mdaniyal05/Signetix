@@ -8,6 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { formatListTimestamp } from "@/lib/format";
 import { useChats } from "@/hooks/useChats";
+import { usePresence } from "@/realtime/PresenceContext";
 import type { Chat } from "@/types/api";
 import { NewChatDialog } from "./NewChatDialog";
 
@@ -19,6 +20,7 @@ interface ChatListProps {
 export function ChatList({ activeChatId, onSelect }: ChatListProps) {
   const { session } = useAuth();
   const myId = session?.userId;
+  const { isOnline } = usePresence();
   const { data: chats, isLoading } = useChats(session?.phoneNumber);
 
   const titleFor = useMemo(
@@ -61,10 +63,15 @@ export function ChatList({ activeChatId, onSelect }: ChatListProps) {
                       activeChatId === chat._id && "bg-accent",
                     )}
                   >
-                    <UserAvatar
-                      name={titleFor(chat)}
-                      src={other?.profilePicture}
-                    />
+                    <div className="relative shrink-0">
+                      <UserAvatar
+                        name={titleFor(chat)}
+                        src={other?.profilePicture}
+                      />
+                      {isOnline(other?.phoneNumber) && (
+                        <span className="absolute bottom-0 right-0 size-3 rounded-full border-2 border-background bg-green-500" />
+                      )}
+                    </div>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center justify-between gap-2">
                         <p className="truncate font-medium">{titleFor(chat)}</p>

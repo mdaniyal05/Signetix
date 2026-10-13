@@ -37,9 +37,11 @@ export interface AuthSession {
   userId: string;
   name: string;
   phoneNumber: string;
+  email?: string;
   accessToken: string;
   refreshToken: string;
   profilePicture?: string;
+  isVerified?: boolean;
 }
 
 export interface Contact {
@@ -76,6 +78,8 @@ export interface Message {
   chatId: string;
   content: string;
   messageType?: string;
+  mediaUrl?: string;
+  mediaType?: string;
   createdAt: string;
   updatedAt?: string;
   isEdited?: boolean;

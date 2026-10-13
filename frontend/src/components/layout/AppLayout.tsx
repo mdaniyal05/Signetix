@@ -3,6 +3,7 @@ import {
   Hand,
   LayoutDashboard,
   LogOut,
+  MailWarning,
   MessageSquare,
   PhoneCall,
   Settings as SettingsIcon,
@@ -12,6 +13,7 @@ import {
 import { useAuth } from "@/auth/AuthContext";
 import { useChatRealtime } from "@/hooks/useChatRealtime";
 import { CallSignalingProvider } from "@/realtime/CallSignalingProvider";
+import { PresenceProvider } from "@/realtime/PresenceContext";
 import { UserAvatar } from "@/components/common/UserAvatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -45,6 +47,7 @@ export function AppLayout() {
   };
 
   return (
+    <PresenceProvider>
     <CallSignalingProvider>
       <div className="flex h-screen bg-muted/30">
         <aside className="hidden w-64 shrink-0 flex-col border-r bg-background sm:flex">
@@ -119,12 +122,24 @@ export function AppLayout() {
             </div>
           </header>
 
+          {session && session.isVerified === false && (
+            <button
+              type="button"
+              onClick={() => navigate("/verify")}
+              className="flex w-full items-center justify-center gap-2 bg-amber-500/15 px-4 py-2 text-sm text-amber-700 hover:bg-amber-500/25 dark:text-amber-400"
+            >
+              <MailWarning className="size-4" />
+              Your email isn't verified yet — verify now
+            </button>
+          )}
+
           <main className="min-h-0 flex-1 overflow-auto">
             <Outlet />
           </main>
         </div>
       </div>
     </CallSignalingProvider>
+    </PresenceProvider>
   );
 }
 

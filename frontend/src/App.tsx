@@ -11,6 +11,7 @@ import { CallHistoryPage } from "@/pages/CallHistoryPage";
 import { SettingsPage } from "@/pages/SettingsPage";
 import { LoginPage } from "@/pages/auth/LoginPage";
 import { SignupPage } from "@/pages/auth/SignupPage";
+import { VerifyEmailPage } from "@/pages/auth/VerifyEmailPage";
 
 // Heavy routes (VideoSDK call + camera recognition) are code-split.
 const CallPage = lazy(() =>
@@ -39,6 +40,7 @@ export default function App() {
         <Route path="/recognition-test" element={<RecognitionTestPage />} />
 
         <Route element={<ProtectedRoute />}>
+          <Route path="/verify" element={<VerifyEmailPage />} />
           <Route path="/call/:meetingId" element={<CallPage />} />
           <Route element={<AppLayout />}>
             <Route path="/" element={<DashboardPage />} />

@@ -35,14 +35,16 @@ class MessageController {
       if (targetUserPhoneNumbersValidation)
         return targetUserPhoneNumbersValidation;
 
-      const messageValidation = await ExceptionHelper.validate(
-        request.body.message,
-        400,
-        `message Content is required!`,
-        response
-      );
-
-      if (messageValidation) return messageValidation;
+      // A message needs text or an attachment (mediaUrl), not necessarily both.
+      if (!request.body.message && !request.body.mediaUrl) {
+        const messageValidation = await ExceptionHelper.validate(
+          null,
+          400,
+          `message content or a mediaUrl is required!`,
+          response
+        );
+        if (messageValidation) return messageValidation;
+      }
 
       //database validations
       const mainUser =
@@ -133,7 +135,9 @@ class MessageController {
         senderId: mainUserId,
         receiverIds: targetUserIds,
         chatId: chatId,
-        content: request.body.message,
+        content: request.body.message ?? "",
+        mediaUrl: request.body.mediaUrl,
+        mediaType: request.body.mediaType,
       };
 
       // Add reply reference if this is a reply

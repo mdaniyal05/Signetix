@@ -37,7 +37,7 @@ export function SignupPage() {
     setSubmitting(true);
     try {
       await signup(name.trim(), phoneNumber.trim(), email.trim(), password);
-      navigate("/", { replace: true });
+      navigate("/verify", { replace: true });
     } catch (error) {
       toast.error("Sign up failed", {
         description: error instanceof Error ? error.message : undefined,

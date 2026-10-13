@@ -96,6 +96,8 @@ export function MessageBubble({
           </div>
         )}
 
+        {message.mediaUrl && <Attachment message={message} />}
+
         {editing ? (
           <div className="space-y-2">
             <Textarea
@@ -126,9 +128,11 @@ export function MessageBubble({
             </div>
           </div>
         ) : (
-          <p className="whitespace-pre-wrap wrap-break-word">
-            {message.content}
-          </p>
+          message.content && (
+            <p className="whitespace-pre-wrap wrap-break-word">
+              {message.content}
+            </p>
+          )
         )}
 
         <div
@@ -153,6 +157,39 @@ export function MessageBubble({
         />
       )}
     </div>
+  );
+}
+
+// Renders a chat attachment: image/video inline, anything else as a download link.
+function Attachment({ message }: { message: Message }) {
+  const url = message.mediaUrl!;
+  const type = message.mediaType ?? "";
+  const isImage = type.startsWith("image/");
+  const isVideo = type.startsWith("video/");
+
+  if (isImage) {
+    return (
+      <a href={url} target="_blank" rel="noreferrer" className="mb-1 block">
+        <img
+          src={url}
+          alt="attachment"
+          className="max-h-64 w-full rounded-lg object-cover"
+        />
+      </a>
+    );
+  }
+  if (isVideo) {
+    return <video src={url} controls className="mb-1 max-h-64 w-full rounded-lg" />;
+  }
+  return (
+    <a
+      href={url}
+      target="_blank"
+      rel="noreferrer"
+      className="mb-1 block underline opacity-90"
+    >
+      View attachment
+    </a>
   );
 }
 

@@ -10,6 +10,7 @@ export const messagesApi = {
     message: string,
     replyToId?: string,
     chatId?: string,
+    media?: { mediaUrl: string; mediaType: string },
   ) =>
     api.post<Message & { chatId: string }>("/messages/create", {
       mainUserPhoneNumber,
@@ -18,6 +19,8 @@ export const messagesApi = {
       replyToId,
       // Sending into the open chat keeps both sides in one thread (no duplicate chat).
       chatId,
+      mediaUrl: media?.mediaUrl,
+      mediaType: media?.mediaType,
     }),
 
   edit: (senderPhoneNumber: string, messageId: string, newContent: string) =>

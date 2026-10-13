@@ -39,9 +39,11 @@ function toSession(response: AuthResponse): AuthSession {
     userId: response._id,
     name: response.name,
     phoneNumber: response.phoneNumber,
+    email: response.email,
     accessToken: response.accessToken,
     refreshToken: response.userAuthenticationRecord?.refreshToken ?? "",
     profilePicture: response.profilePicture,
+    isVerified: response.userAuthenticationRecord?.isVerified,
   };
 }
 
