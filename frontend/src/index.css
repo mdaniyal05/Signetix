@@ -3,52 +3,63 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
- * shadcn/ui design tokens (neutral base). CSS variables are mapped into Tailwind
- * via @theme inline so utilities like `bg-background` / `text-foreground` work.
+ * shadcn/ui design tokens — Signetix teal/blue brand palette.
+ * yale_blue #1b4965 · fresh_sky #5fa8d3 · pacific_blue #62b6cb · pale_sky #cae9ff · frozen_water #bee9e8
+ * Mapped into Tailwind via @theme inline so `bg-primary` / `text-foreground` etc. carry the brand everywhere.
+ * --brand-* are the raw ramp, for gradients and bespoke surfaces (e.g. the landing page).
  */
 :root {
   --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
+  --background: #f6fafc;
+  --foreground: #0c2430;
+  --card: #ffffff;
+  --card-foreground: #0c2430;
+  --popover: #ffffff;
+  --popover-foreground: #0c2430;
+  --primary: #1b4965;
+  --primary-foreground: #f2fbff;
+  --secondary: #e3f1f6;
+  --secondary-foreground: #153a51;
+  --muted: #eef5f9;
+  --muted-foreground: #577484;
+  --accent: #d8eefb;
+  --accent-foreground: #15455f;
   --destructive: oklch(0.577 0.245 27.325);
   --destructive-foreground: oklch(0.985 0 0);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
+  --border: #d3e4ec;
+  --input: #d3e4ec;
+  --ring: #5fa8d3;
+
+  /* Brand ramp (dark → light) */
+  --brand-ink: #0a1f2b;
+  --brand-deep: #1b4965;
+  --brand: #2d7587;
+  --brand-mid: #5fa8d3;
+  --brand-sky: #62b6cb;
+  --brand-pale: #cae9ff;
+  --brand-frost: #bee9e8;
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
+  --background: #081820;
+  --foreground: #e4f1f7;
+  --card: #0f2a38;
+  --card-foreground: #e4f1f7;
+  --popover: #0f2a38;
+  --popover-foreground: #e4f1f7;
+  --primary: #5fa8d3;
+  --primary-foreground: #05131b;
+  --secondary: #143a4f;
+  --secondary-foreground: #e4f1f7;
+  --muted: #13303f;
+  --muted-foreground: #8fbdd3;
+  --accent: #1b4965;
+  --accent-foreground: #e4f1f7;
   --destructive: oklch(0.704 0.191 22.216);
   --destructive-foreground: oklch(0.985 0 0);
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
+  --ring: #62b6cb;
 }
 
 @theme inline {
@@ -71,6 +82,13 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-brand-ink: var(--brand-ink);
+  --color-brand-deep: var(--brand-deep);
+  --color-brand: var(--brand);
+  --color-brand-mid: var(--brand-mid);
+  --color-brand-sky: var(--brand-sky);
+  --color-brand-pale: var(--brand-pale);
+  --color-brand-frost: var(--brand-frost);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
