@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Hand, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { useAuth } from "@/auth/AuthContext";
@@ -45,9 +45,11 @@ export function LoginPage() {
     <div className="flex min-h-screen items-center justify-center bg-muted/30 p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <div className="mx-auto mb-2 flex size-12 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-            <Hand className="size-6" />
-          </div>
+          <img
+            src="/logo.png"
+            alt="Signetix"
+            className="mx-auto mb-2 size-14 object-contain dark:brightness-0 dark:invert"
+          />
           <CardTitle className="text-2xl">Welcome back</CardTitle>
           <CardDescription>Sign in to your Signetix account</CardDescription>
         </CardHeader>

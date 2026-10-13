@@ -1,6 +1,5 @@
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import {
-  Hand,
   LayoutDashboard,
   LogOut,
   MailWarning,
@@ -52,9 +51,11 @@ export function AppLayout() {
       <div className="flex h-screen bg-muted/30">
         <aside className="hidden w-64 shrink-0 flex-col border-r bg-background sm:flex">
           <div className="flex h-16 items-center gap-2 border-b px-6">
-            <div className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-              <Hand className="size-5" />
-            </div>
+            <img
+              src="/logo.png"
+              alt="Signetix"
+              className="size-8 object-contain dark:brightness-0 dark:invert"
+            />
             <span className="text-lg font-semibold">Signetix</span>
           </div>
           <nav className="flex-1 space-y-1 p-3">
