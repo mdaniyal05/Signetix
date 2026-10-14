@@ -1,13 +1,23 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Camera, CameraOff, Loader2 } from "lucide-react";
+import {
+  ArrowLeft,
+  Camera,
+  CameraOff,
+  Loader2,
+  Volume2,
+  VolumeX,
+} from "lucide-react";
 import { toast } from "sonner";
 
+import { useAuth } from "@/auth/AuthContext";
 import { CaptionBar } from "@/components/recognition/CaptionBar";
 import { RecognitionStatus } from "@/components/recognition/RecognitionStatus";
 import { TranscriptPanel } from "@/components/recognition/TranscriptPanel";
 import { Button } from "@/components/ui/button";
 import { usePslRecognition } from "@/hooks/usePslRecognition";
+import { useSettings } from "@/hooks/useSettings";
+import { useSignSpeech, speechSupported } from "@/hooks/useSignSpeech";
 import { cn } from "@/lib/utils";
 
 type CameraState = "idle" | "starting" | "on" | "error";
@@ -18,9 +28,18 @@ export function RecognitionTestPage() {
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [cameraState, setCameraState] = useState<CameraState>("idle");
   const [errorMessage, setErrorMessage] = useState("");
+  const [speechOn, setSpeechOn] = useState(true);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   const recognition = usePslRecognition({ stream });
+
+  // Caption/transcript/speech language follows the user's PSL preference (if signed in).
+  const { session } = useAuth();
+  const { data: settings } = useSettings(session?.phoneNumber);
+  const language = settings?.pslTranslationLanguage ?? "English";
+
+  // Speak each newly recognized sign out loud (when enabled and the camera is on).
+  useSignSpeech(recognition.latest, speechOn && stream !== null, language);
 
   // Attach the stream to the (always-mounted) video element.
   useEffect(() => {
@@ -101,10 +120,28 @@ export function RecognitionTestPage() {
           <ArrowLeft />
           Back
         </Button>
-        <RecognitionStatus
-          connection={recognition.connection}
-          isSigning={recognition.isSigning}
-        />
+        <div className="flex items-center gap-3">
+          <Button
+            variant={speechOn ? "secondary" : "outline"}
+            size="icon"
+            onClick={() => setSpeechOn((on) => !on)}
+            disabled={!speechSupported()}
+            aria-label={speechOn ? "Mute spoken signs" : "Speak signs aloud"}
+            title={
+              speechSupported()
+                ? speechOn
+                  ? "Mute spoken signs"
+                  : "Speak signs aloud"
+                : "Text-to-speech not supported in this browser"
+            }
+          >
+            {speechOn ? <Volume2 /> : <VolumeX />}
+          </Button>
+          <RecognitionStatus
+            connection={recognition.connection}
+            isSigning={recognition.isSigning}
+          />
+        </div>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-[1fr_320px]">
@@ -144,6 +181,7 @@ export function RecognitionTestPage() {
             <CaptionBar
               latest={recognition.latest}
               isSigning={recognition.isSigning}
+              language={language}
               className="absolute inset-x-0 bottom-4"
             />
           )}
@@ -153,6 +191,7 @@ export function RecognitionTestPage() {
           <TranscriptPanel
             transcript={recognition.transcript}
             sentence={recognition.sentence}
+            language={language}
             onClear={recognition.clearTranscript}
           />
           {stream && (
