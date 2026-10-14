@@ -67,10 +67,10 @@ export function LandingPage() {
 
       {/* Animated teal/blue backdrop */}
       <div aria-hidden className="pointer-events-none absolute inset-0 -z-10">
-        <div className="absolute inset-0 bg-gradient-to-b from-[#0d2a3a] via-[#081e2a] to-[#061018]" />
+        <div className="absolute inset-0 bg-linear-to-b from-[#0d2a3a] via-[#081e2a] to-[#061018]" />
         <div className="landing-blob absolute -left-24 top-10 size-96 rounded-full bg-[#1b4965]/50 blur-[120px]" />
         <div className="landing-blob absolute -right-24 top-44 size-96 rounded-full bg-[#5fa8d3]/25 blur-[130px]" style={{ animationDelay: "-7s" }} />
-        <div className="landing-blob absolute left-1/3 top-[34rem] size-[28rem] rounded-full bg-[#62b6cb]/20 blur-[140px]" style={{ animationDelay: "-14s" }} />
+        <div className="landing-blob absolute left-1/3 top-136 size-112 rounded-full bg-[#62b6cb]/20 blur-[140px]" style={{ animationDelay: "-14s" }} />
         <div className="landing-grid absolute inset-0 opacity-[0.06]" />
       </div>
 
@@ -140,7 +140,7 @@ export function LandingPage() {
         </div>
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {FEATURES.map(({ icon: Icon, title, description, tint }) => (
-            <div key={title} className="group rounded-2xl border border-white/10 bg-white/[0.04] p-5 backdrop-blur transition-all duration-300 hover:-translate-y-1.5 hover:border-[#5fa8d3]/40 hover:bg-white/[0.06] hover:shadow-[0_20px_60px_-15px_rgba(95,168,211,0.45)]">
+            <div key={title} className="group rounded-2xl border border-white/10 bg-white/4 p-5 backdrop-blur transition-all duration-300 hover:-translate-y-1.5 hover:border-[#5fa8d3]/40 hover:bg-white/6 hover:shadow-[0_20px_60px_-15px_rgba(95,168,211,0.45)]">
               <div className="mb-4 flex size-11 items-center justify-center rounded-xl text-white shadow-lg transition-transform duration-300 group-hover:scale-110" style={{ backgroundImage: tint }}>
                 <Icon className="size-5" />
               </div>
@@ -235,8 +235,8 @@ function HeroMockup() {
         </div>
       </div>
 
-      <div className="rounded-[1.75rem] border border-white/10 bg-white/[0.04] p-2 shadow-2xl backdrop-blur">
-        <div className="relative aspect-[4/3] overflow-hidden rounded-[1.35rem]" style={{ backgroundImage: "linear-gradient(135deg,#0f2a3b,#153a51)" }}>
+      <div className="rounded-[1.75rem] border border-white/10 bg-white/4 p-2 shadow-2xl backdrop-blur">
+        <div className="relative aspect-4/3 overflow-hidden rounded-[1.35rem]" style={{ backgroundImage: "linear-gradient(135deg,#0f2a3b,#153a51)" }}>
           {/* subtle glow */}
           <div aria-hidden className="landing-blob absolute left-1/2 top-1/2 size-56 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#5fa8d3]/30 blur-3xl" />
 
