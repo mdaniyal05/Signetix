@@ -187,19 +187,25 @@ export function RecognitionTestPage() {
           )}
         </div>
 
-        <div className="flex h-[60vh] flex-col gap-3 lg:h-auto">
-          <TranscriptPanel
-            transcript={recognition.transcript}
-            sentence={recognition.sentence}
-            language={language}
-            onClear={recognition.clearTranscript}
-          />
-          {stream && (
-            <Button variant="outline" onClick={stopCamera}>
-              <CameraOff />
-              Stop camera
-            </Button>
-          )}
+        {/* Fixed-height wrapper so a long transcript scrolls inside the panel
+            instead of stretching the row (matches the video height on lg). */}
+        <div className="relative h-[60vh] min-h-0 lg:h-auto">
+          <div className="inset-0 flex h-full flex-col gap-3 lg:absolute">
+            <div className="min-h-0 flex-1">
+              <TranscriptPanel
+                transcript={recognition.transcript}
+                sentence={recognition.sentence}
+                language={language}
+                onClear={recognition.clearTranscript}
+              />
+            </div>
+            {stream && (
+              <Button variant="outline" onClick={stopCamera}>
+                <CameraOff />
+                Stop camera
+              </Button>
+            )}
+          </div>
         </div>
       </div>
     </div>
