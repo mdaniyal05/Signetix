@@ -1,35 +1,56 @@
 import { useState } from "react";
-import { Check, CheckCheck, Forward, MoreVertical, Pin, Reply } from "lucide-react";
+import {
+  Check,
+  CheckCheck,
+  Forward,
+  Heart,
+  Laugh,
+  MoreVertical,
+  Pin,
+  Reply,
+  ThumbsUp,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { formatTime } from "@/lib/format";
-import type { Message } from "@/types/api";
+import type { Message, ReactionType } from "@/types/api";
+
+const REACTIONS: { type: ReactionType; Icon: typeof ThumbsUp; label: string }[] = [
+  { type: "like", Icon: ThumbsUp, label: "Like" },
+  { type: "love", Icon: Heart, label: "Love" },
+  { type: "laugh", Icon: Laugh, label: "Laugh" },
+];
 
 interface MessageBubbleProps {
   message: Message;
   isOwn: boolean;
+  myId?: string;
   onReply: (message: Message) => void;
   onDelete: (messageId: string) => void;
   onTogglePin: (message: Message) => void;
   onForward: (message: Message) => void;
+  onReact: (message: Message, type: ReactionType) => void;
   onSaveEdit: (messageId: string, newContent: string) => void;
 }
 
 export function MessageBubble({
   message,
   isOwn,
+  myId,
   onReply,
   onDelete,
   onTogglePin,
   onForward,
+  onReact,
   onSaveEdit,
 }: MessageBubbleProps) {
   const [editing, setEditing] = useState(false);
@@ -60,6 +81,7 @@ export function MessageBubble({
           onDelete={onDelete}
           onTogglePin={onTogglePin}
           onForward={onForward}
+          onReact={onReact}
           onEdit={() => {
             setDraft(message.content);
             setEditing(true);
@@ -154,6 +176,13 @@ export function MessageBubble({
               <Check className="size-3.5" aria-label="Sent" />
             ))}
         </div>
+
+        <ReactionPills
+          message={message}
+          isOwn={isOwn}
+          myId={myId}
+          onReact={onReact}
+        />
       </div>
 
       {!isOwn && (
@@ -164,6 +193,7 @@ export function MessageBubble({
           onDelete={onDelete}
           onTogglePin={onTogglePin}
           onForward={onForward}
+          onReact={onReact}
         />
       )}
     </div>
@@ -203,6 +233,47 @@ function Attachment({ message }: { message: Message }) {
   );
 }
 
+// Reaction pills under a bubble: one per type present, counts, caller's own highlighted.
+function ReactionPills({
+  message,
+  isOwn,
+  myId,
+  onReact,
+}: {
+  message: Message;
+  isOwn: boolean;
+  myId?: string;
+  onReact: (message: Message, type: ReactionType) => void;
+}) {
+  const reactions = message.reactions ?? [];
+  if (reactions.length === 0) return null;
+
+  return (
+    <div className="mt-1 flex flex-wrap gap-1">
+      {REACTIONS.map(({ type, Icon }) => {
+        const forType = reactions.filter((reaction) => reaction.type === type);
+        if (forType.length === 0) return null;
+        const mine = myId != null && forType.some((reaction) => reaction.userId === myId);
+        return (
+          <button
+            key={type}
+            type="button"
+            onClick={() => onReact(message, type)}
+            className={cn(
+              "flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px]",
+              isOwn ? "bg-black/15" : "bg-background/70",
+              mine && "ring-1 ring-current",
+            )}
+          >
+            <Icon className="size-3" />
+            {forType.length}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 function MessageMenu({
   message,
   isOwn,
@@ -210,6 +281,7 @@ function MessageMenu({
   onDelete,
   onTogglePin,
   onForward,
+  onReact,
   onEdit,
 }: {
   message: Message;
@@ -218,6 +290,7 @@ function MessageMenu({
   onDelete: (messageId: string) => void;
   onTogglePin: (message: Message) => void;
   onForward: (message: Message) => void;
+  onReact: (message: Message, type: ReactionType) => void;
   onEdit?: () => void;
 }) {
   return (
@@ -233,6 +306,21 @@ function MessageMenu({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align={isOwn ? "end" : "start"}>
+        <div className="flex justify-around px-1 py-0.5">
+          {REACTIONS.map(({ type, Icon, label }) => (
+            <Button
+              key={type}
+              size="icon"
+              variant="ghost"
+              className="size-8"
+              aria-label={label}
+              onClick={() => onReact(message, type)}
+            >
+              <Icon className="size-4" />
+            </Button>
+          ))}
+        </div>
+        <DropdownMenuSeparator />
         <DropdownMenuItem onClick={() => onReply(message)}>
           <Reply />
           Reply

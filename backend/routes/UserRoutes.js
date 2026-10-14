@@ -4,6 +4,13 @@ const ControllerFactory = require("../factories/controllerFactory.js");
 
 userRouter.get("/all", ControllerFactory.getUserController().getAllUsers);
 
+userRouter.post("/block", ControllerFactory.getUserController().toggleBlock);
+
+userRouter.get(
+  "/blocked/:phoneNumber",
+  ControllerFactory.getUserController().getBlockedUsers
+);
+
 userRouter.delete(
   "/delete/filter/",
   ControllerFactory.getUserController().deleteUser

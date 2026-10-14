@@ -136,6 +136,25 @@ class ChatController {
         .sort({ createdAt: 1 }) // Sort by creation time
         .lean();
 
+      // Attach each message's reactions.
+      const reactions =
+        await ServiceFactory.getReactionService.getDocumentsByCustomFilters({
+          messageId: { $in: populatedChatData.map((message) => message._id) },
+        });
+      const reactionsByMessage = new Map();
+      for (const reaction of reactions) {
+        const key = reaction.messageId.toString();
+        if (!reactionsByMessage.has(key)) reactionsByMessage.set(key, []);
+        reactionsByMessage.get(key).push({
+          _id: reaction._id,
+          userId: reaction.userId,
+          type: reaction.type,
+        });
+      }
+      for (const message of populatedChatData) {
+        message.reactions = reactionsByMessage.get(message._id.toString()) ?? [];
+      }
+
       // Get pinned messages for this chat
       const pinnedMessages =
         await ServiceFactory.getMessageService.getDocumentsByCustomFilters({

@@ -27,6 +27,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { useSettings, useUpdateSettings } from "@/hooks/useSettings";
 import { useTheme } from "@/theme/ThemeProvider";
+import { disablePush, enablePush } from "@/lib/push";
 import type { PslLanguage, Theme } from "@/types/api";
 
 export function SettingsPage() {
@@ -48,6 +49,24 @@ export function SettingsPage() {
           description: error instanceof Error ? error.message : undefined,
         }),
     });
+
+  // Toggling notifications also subscribes/unsubscribes this device for web push.
+  const handleNotificationToggle = async (checked: boolean) => {
+    if (checked) {
+      try {
+        await enablePush(phone);
+        toast.success("Notifications enabled on this device");
+      } catch (error) {
+        toast.error("Could not enable notifications", {
+          description: error instanceof Error ? error.message : undefined,
+        });
+        return;
+      }
+    } else {
+      await disablePush(phone).catch(() => undefined);
+    }
+    update({ notificationEnabled: checked });
+  };
 
   return (
     <div className="mx-auto w-full max-w-2xl space-y-6 p-4 sm:p-6">
@@ -126,9 +145,7 @@ export function SettingsPage() {
               >
                 <Switch
                   checked={settings.notificationEnabled}
-                  onCheckedChange={(checked) =>
-                    update({ notificationEnabled: checked })
-                  }
+                  onCheckedChange={handleNotificationToggle}
                 />
               </SettingRow>
 

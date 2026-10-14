@@ -441,6 +441,94 @@ class UserController {
     }
   };
 
+  //Block or unblock another user for the authenticated caller.
+  toggleBlock = async (request, response) => {
+    try {
+      const targetValidation = await ExceptionHelper.validate(
+        request.body.targetPhoneNumber,
+        400,
+        `targetPhoneNumber is required!`,
+        response
+      );
+      if (targetValidation) return targetValidation;
+
+      const actor =
+        await ServiceFactory.getUserService.getDocumentByCustomFilters({
+          phoneNumber: request.body.phoneNumber,
+        });
+      const actorValidation = await ExceptionHelper.validate(
+        actor,
+        400,
+        `phoneNumber doesn't exist in the user table!`,
+        response
+      );
+      if (actorValidation) return actorValidation;
+
+      if (
+        request.authUserId != null &&
+        actor._id.toString() !== request.authUserId
+      ) {
+        const forbidden = new SignetixException(
+          403,
+          "You can only manage your own block list."
+        );
+        return response.status(forbidden.status).json(forbidden.loadResult());
+      }
+
+      const target =
+        await ServiceFactory.getUserService.getDocumentByCustomFilters({
+          phoneNumber: request.body.targetPhoneNumber,
+        });
+      const targetUserValidation = await ExceptionHelper.validate(
+        target,
+        400,
+        `targetPhoneNumber doesn't exist in the user table!`,
+        response
+      );
+      if (targetUserValidation) return targetUserValidation;
+
+      const targetId = target._id.toString();
+      const blocked = (actor.blockedUsers ?? []).map((id) => id.toString());
+      const next = request.body.block
+        ? [...new Set([...blocked, targetId])]
+        : blocked.filter((id) => id !== targetId);
+
+      await ServiceFactory.getUserService.updateDocument(
+        { _id: actor._id },
+        { blockedUsers: next }
+      );
+
+      response.json({ blockedUsers: next });
+    } catch (exception) {
+      response.status(500).json({ error: exception.message });
+    }
+  };
+
+  //List the users the given user has blocked (minimal public fields).
+  getBlockedUsers = async (request, response) => {
+    try {
+      const user = await ServiceFactory.getUserService
+        .getDocumentByCustomFiltersQuery({
+          phoneNumber: request.params.phoneNumber,
+        })
+        .populate({
+          path: "blockedUsers",
+          select: "name phoneNumber profilePicture",
+        })
+        .lean();
+
+      if (user == null) {
+        return response.status(400).json({
+          error: `No such user exists with the phoneNumber: ${request.params.phoneNumber}`,
+        });
+      }
+
+      response.json(user.blockedUsers ?? []);
+    } catch (exception) {
+      response.status(500).json({ error: exception.message });
+    }
+  };
+
   async getUserIds(phoneNumbers) {
     var mongooseSession = null;
 

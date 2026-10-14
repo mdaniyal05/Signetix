@@ -8,6 +8,7 @@ const TwilioManager = require("../managers/twilio/twilioManager.js");
 const JwtManager = require("../managers/jwt/jwtManager.js");
 const CloudinaryManager = require("../managers/cloudinary/cloudinaryManager.js");
 const ResendManager = require("../managers/resend/resendManager.js");
+const NotificationPushManager = require("../managers/notificationPushManager.js");
 
 class ManagerFactory {
   /**
@@ -39,6 +40,12 @@ class ManagerFactory {
    * @type {ResendManager | null}
    */
   static #resendManager = null;
+
+  /**
+   * @private
+   * @type {NotificationPushManager | null}
+   */
+  static #notificationPushManager = null;
 
   static getAwsS3Manager() {
     if (!ManagerFactory.#awsS3Manager) {
@@ -73,6 +80,13 @@ class ManagerFactory {
       ManagerFactory.#resendManager = new ResendManager();
     }
     return ManagerFactory.#resendManager;
+  }
+
+  static getNotificationPushManager() {
+    if (!ManagerFactory.#notificationPushManager) {
+      ManagerFactory.#notificationPushManager = new NotificationPushManager();
+    }
+    return ManagerFactory.#notificationPushManager;
   }
 }
 

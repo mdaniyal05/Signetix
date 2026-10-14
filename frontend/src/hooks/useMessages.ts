@@ -1,8 +1,10 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { messagesApi } from "@/api/messages";
+import { reactionsApi } from "@/api/reactions";
 import { chatKeys } from "@/hooks/useChats";
 import { useSocket } from "@/realtime/SocketContext";
+import type { ReactionType } from "@/types/api";
 
 /**
  * Message mutations for an open chat. All go over REST (the source of truth) and
@@ -76,6 +78,12 @@ export function useMessageActions(
     onSuccess: notifyAndInvalidate,
   });
 
+  const react = useMutation({
+    mutationFn: (vars: { messageId: string; type: ReactionType }) =>
+      reactionsApi.toggle(phoneNumber, vars.messageId, vars.type),
+    onSuccess: notifyAndInvalidate,
+  });
+
   // Forwarding goes to a different chat; invalidate my list and ping those recipients.
   const forward = useMutation({
     mutationFn: (vars: { messageId: string; targetUserPhoneNumbers: string[] }) =>
@@ -91,5 +99,5 @@ export function useMessageActions(
     },
   });
 
-  return { send, edit, remove, pin, markRead, forward };
+  return { send, edit, remove, pin, markRead, forward, react };
 }

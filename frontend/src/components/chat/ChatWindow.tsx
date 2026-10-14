@@ -5,7 +5,18 @@ import {
   useState,
   type KeyboardEvent,
 } from "react";
-import { ArrowLeft, Loader2, Paperclip, Phone, Send, Video, X } from "lucide-react";
+import {
+  ArrowLeft,
+  Ban,
+  Flag,
+  Loader2,
+  MoreVertical,
+  Paperclip,
+  Phone,
+  Send,
+  Video,
+  X,
+} from "lucide-react";
 import { toast } from "sonner";
 
 import { useAuth } from "@/auth/AuthContext";
@@ -13,11 +24,23 @@ import { cloudinaryApi } from "@/api/cloudinary";
 import { UserAvatar } from "@/components/common/UserAvatar";
 import { MessageBubble } from "@/components/chat/MessageBubble";
 import { ForwardDialog } from "@/components/chat/ForwardDialog";
+import { ReportDialog } from "@/components/chat/ReportDialog";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
 import { useChatHistory } from "@/hooks/useChats";
 import { useMessageActions } from "@/hooks/useMessages";
+import {
+  useBlockedUsers,
+  useReportUser,
+  useToggleBlock,
+} from "@/hooks/useModeration";
 import { useCallSignaling } from "@/realtime/CallSignalingProvider";
 import { usePresence } from "@/realtime/PresenceContext";
 import type { Chat, Message, UserRef } from "@/types/api";
@@ -66,6 +89,31 @@ export function ChatWindow({ chatId, chat, onBack }: ChatWindowProps) {
   const targetPhones = others.map((p) => p.phoneNumber);
   const actions = useMessageActions(myPhone, chatId, targetPhones);
   const anyOnline = others.some((p) => isOnline(p.phoneNumber));
+
+  // Moderation applies to a 1:1 chat's other participant.
+  const otherUser = others.length === 1 ? others[0] : null;
+  const { data: blocked } = useBlockedUsers(otherUser ? myPhone : undefined);
+  const toggleBlock = useToggleBlock(myPhone);
+  const reportUser = useReportUser(myPhone);
+  const [reporting, setReporting] = useState(false);
+  const isBlocked = Boolean(
+    otherUser && blocked?.some((user) => user._id === otherUser._id),
+  );
+
+  const handleToggleBlock = () => {
+    if (!otherUser) return;
+    toggleBlock.mutate(
+      { targetPhoneNumber: otherUser.phoneNumber, block: !isBlocked },
+      {
+        onSuccess: () =>
+          toast.success(isBlocked ? "User unblocked" : "User blocked"),
+        onError: (error) =>
+          toast.error("Could not update block", {
+            description: error instanceof Error ? error.message : undefined,
+          }),
+      },
+    );
+  };
 
   // Auto-scroll on new messages.
   useEffect(() => {
@@ -191,6 +239,28 @@ export function ChatWindow({ chatId, chat, onBack }: ChatWindowProps) {
         >
           <Video />
         </Button>
+        {otherUser && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button size="icon" variant="ghost" aria-label="Chat options">
+                <MoreVertical />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => setReporting(true)}>
+                <Flag />
+                Report
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                variant={isBlocked ? "default" : "destructive"}
+                onClick={handleToggleBlock}
+              >
+                <Ban />
+                {isBlocked ? "Unblock" : "Block"}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
       </header>
 
       <ScrollArea className="min-h-0 flex-1 bg-muted/20">
@@ -209,8 +279,12 @@ export function ChatWindow({ chatId, chat, onBack }: ChatWindowProps) {
                 key={message._id}
                 message={message}
                 isOwn={message.senderId?._id === myId}
+                myId={myId}
                 onReply={setReplyTo}
                 onForward={setForwarding}
+                onReact={(m, type) =>
+                  actions.react.mutate({ messageId: m._id, type })
+                }
                 onDelete={(id) => actions.remove.mutate(id)}
                 onTogglePin={(m) =>
                   actions.pin.mutate({
@@ -289,6 +363,20 @@ export function ChatWindow({ chatId, chat, onBack }: ChatWindowProps) {
           });
         }}
       />
+
+      {otherUser && (
+        <ReportDialog
+          open={reporting}
+          name={otherUser.name}
+          onOpenChange={setReporting}
+          onSubmit={async (reason) => {
+            await reportUser.mutateAsync({
+              targetPhoneNumber: otherUser.phoneNumber,
+              reason,
+            });
+          }}
+        />
+      )}
     </div>
   );
 }

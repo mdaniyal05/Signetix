@@ -7,6 +7,7 @@ const ControllerConstants = require("../constants/controllerConstants.js");
 const LoggerFactory = require("../factories/loggerFactory.js");
 const SignetixResultDto = require("../dtos/SignetixResultDto.js");
 const SignetixException = require("../exception/SignetixException.js");
+const NotificationController = require("./NotificationController.js");
 
 class MessageController {
   constructor() {}
@@ -79,6 +80,21 @@ class MessageController {
 
       const targetUserIds = targetUsers.map((user) => user._id.toString());
       const mainUserId = mainUser._id.toString();
+
+      // Block guard: no messaging in either direction once either side has blocked.
+      const senderBlocked = (mainUser.blockedUsers ?? []).map((id) =>
+        id.toString()
+      );
+      const blockedPair =
+        targetUserIds.some((id) => senderBlocked.includes(id)) ||
+        targetUsers.some((user) =>
+          (user.blockedUsers ?? []).some((id) => id.toString() === mainUserId)
+        );
+      if (blockedPair) {
+        return response
+          .status(403)
+          .json({ error: "Messaging is unavailable with a blocked user." });
+      }
 
       let chatId;
 
@@ -173,6 +189,13 @@ class MessageController {
         await ServiceFactory.getMessageService.saveDocument(messageData);
 
       const savedMessage = Array.isArray(message) ? message[0] : message;
+
+      // Fire-and-forget push to the recipients.
+      NotificationController.sendToUserIds(targetUserIds, {
+        title: mainUser.name,
+        body: savedMessage.content || "Sent an attachment",
+        chatId,
+      });
 
       return response.json(savedMessage);
     } catch (exception) {

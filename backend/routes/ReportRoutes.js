@@ -5,5 +5,6 @@ const ReportController = require("../controllers/ReportController.js");
 const reportController = new ReportController();
 
 reportRouter.get("/all", reportController.getAllReports);
+reportRouter.post("/create", reportController.createReport);
 
 module.exports = reportRouter;

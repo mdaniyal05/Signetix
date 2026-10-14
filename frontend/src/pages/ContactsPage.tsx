@@ -1,8 +1,11 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
+  Ban,
+  Flag,
   Loader2,
   MessageSquare,
+  MoreVertical,
   Phone,
   UserPlus,
   Users,
@@ -15,6 +18,7 @@ import { useAuth } from "@/auth/AuthContext";
 import { usersApi } from "@/api/users";
 import { ApiError } from "@/api/client";
 import { UserAvatar } from "@/components/common/UserAvatar";
+import { ReportDialog } from "@/components/chat/ReportDialog";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -25,6 +29,12 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -33,6 +43,7 @@ import {
   useRemoveContact,
   useSetContacts,
 } from "@/hooks/useContacts";
+import { useBlockedUsers, useReportUser, useToggleBlock } from "@/hooks/useModeration";
 import { useCreateChat } from "@/hooks/useChats";
 import { useCallSignaling } from "@/realtime/CallSignalingProvider";
 import { usePresence } from "@/realtime/PresenceContext";
@@ -42,15 +53,43 @@ export function ContactsPage() {
   const phone = session?.phoneNumber;
   const navigate = useNavigate();
   const { data: contacts, isLoading } = useContacts(phone);
+  const { data: blocked } = useBlockedUsers(phone);
   const removeContact = useRemoveContact(phone ?? "");
+  const toggleBlock = useToggleBlock(phone ?? "");
+  const reportUser = useReportUser(phone ?? "");
   const createChat = useCreateChat(phone ?? "");
   const { startCall } = useCallSignaling();
   const { isOnline } = usePresence();
+  const [reportTarget, setReportTarget] = useState<{
+    name: string;
+    phoneNumber: string;
+  } | null>(null);
 
   const existingPhones = useMemo(
     () => (contacts ?? []).map((c) => c.contactUserId.phoneNumber),
     [contacts],
   );
+
+  const blockedIds = useMemo(
+    () => new Set((blocked ?? []).map((user) => user._id)),
+    [blocked],
+  );
+  const visibleContacts = useMemo(
+    () => (contacts ?? []).filter((c) => !blockedIds.has(c.contactUserId._id)),
+    [contacts, blockedIds],
+  );
+
+  const setBlocked = (targetPhoneNumber: string, block: boolean) =>
+    toggleBlock.mutate(
+      { targetPhoneNumber, block },
+      {
+        onSuccess: () => toast.success(block ? "User blocked" : "User unblocked"),
+        onError: (error) =>
+          toast.error("Could not update block", {
+            description: error instanceof Error ? error.message : undefined,
+          }),
+      },
+    );
 
   const openChat = async (contactPhone: string) => {
     try {
@@ -96,71 +135,140 @@ export function ContactsPage() {
             <Skeleton key={i} className="h-16 w-full" />
           ))}
         </div>
-      ) : !contacts || contacts.length === 0 ? (
+      ) : visibleContacts.length === 0 && (blocked?.length ?? 0) === 0 ? (
         <EmptyContacts />
       ) : (
-        <ul className="divide-y rounded-xl border bg-card">
-          {contacts.map((contact) => (
-            <li key={contact._id} className="flex items-center gap-3 p-3">
-              <div className="relative shrink-0">
-                <UserAvatar
-                  name={contact.contactUserId.name}
-                  src={contact.contactUserId.profilePicture}
-                />
-                {isOnline(contact.contactUserId.phoneNumber) && (
-                  <span className="absolute bottom-0 right-0 size-3 rounded-full border-2 border-background bg-green-500" />
-                )}
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="truncate font-medium">
-                  {contact.contactUserId.name}
-                </p>
-                <p className="truncate text-sm text-muted-foreground">
-                  {contact.contactUserId.phoneNumber}
-                </p>
-              </div>
-              <div className="flex items-center gap-1">
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  aria-label="Message"
-                  onClick={() => openChat(contact.contactUserId.phoneNumber)}
-                >
-                  <MessageSquare />
-                </Button>
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  aria-label="Voice call"
-                  onClick={() =>
-                    startCall([contact.contactUserId.phoneNumber], true)
-                  }
-                >
-                  <Phone />
-                </Button>
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  aria-label="Video call"
-                  onClick={() =>
-                    startCall([contact.contactUserId.phoneNumber], false)
-                  }
-                >
-                  <Video />
-                </Button>
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  aria-label="Remove"
-                  onClick={() => handleRemove(contact.contactUserId._id)}
-                >
-                  <X />
-                </Button>
-              </div>
-            </li>
-          ))}
-        </ul>
+        <>
+          <ul className="divide-y rounded-xl border bg-card">
+            {visibleContacts.map((contact) => (
+              <li key={contact._id} className="flex items-center gap-3 p-3">
+                <div className="relative shrink-0">
+                  <UserAvatar
+                    name={contact.contactUserId.name}
+                    src={contact.contactUserId.profilePicture}
+                  />
+                  {isOnline(contact.contactUserId.phoneNumber) && (
+                    <span className="absolute bottom-0 right-0 size-3 rounded-full border-2 border-background bg-green-500" />
+                  )}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-medium">
+                    {contact.contactUserId.name}
+                  </p>
+                  <p className="truncate text-sm text-muted-foreground">
+                    {contact.contactUserId.phoneNumber}
+                  </p>
+                </div>
+                <div className="flex items-center gap-1">
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    aria-label="Message"
+                    onClick={() => openChat(contact.contactUserId.phoneNumber)}
+                  >
+                    <MessageSquare />
+                  </Button>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    aria-label="Voice call"
+                    onClick={() =>
+                      startCall([contact.contactUserId.phoneNumber], true)
+                    }
+                  >
+                    <Phone />
+                  </Button>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    aria-label="Video call"
+                    onClick={() =>
+                      startCall([contact.contactUserId.phoneNumber], false)
+                    }
+                  >
+                    <Video />
+                  </Button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button size="icon" variant="ghost" aria-label="More">
+                        <MoreVertical />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem
+                        onClick={() =>
+                          setReportTarget({
+                            name: contact.contactUserId.name,
+                            phoneNumber: contact.contactUserId.phoneNumber,
+                          })
+                        }
+                      >
+                        <Flag />
+                        Report
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() =>
+                          setBlocked(contact.contactUserId.phoneNumber, true)
+                        }
+                      >
+                        <Ban />
+                        Block
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        variant="destructive"
+                        onClick={() => handleRemove(contact.contactUserId._id)}
+                      >
+                        <X />
+                        Remove
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              </li>
+            ))}
+          </ul>
+
+          {(blocked?.length ?? 0) > 0 && (
+            <div className="space-y-2">
+              <h2 className="px-1 text-sm font-medium text-muted-foreground">
+                Blocked
+              </h2>
+              <ul className="divide-y rounded-xl border bg-card">
+                {blocked!.map((user) => (
+                  <li key={user._id} className="flex items-center gap-3 p-3">
+                    <UserAvatar name={user.name} src={user.profilePicture} />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate font-medium">{user.name}</p>
+                      <p className="truncate text-sm text-muted-foreground">
+                        {user.phoneNumber}
+                      </p>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setBlocked(user.phoneNumber, false)}
+                    >
+                      Unblock
+                    </Button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </>
       )}
+
+      <ReportDialog
+        open={reportTarget !== null}
+        name={reportTarget?.name ?? ""}
+        onOpenChange={(open) => !open && setReportTarget(null)}
+        onSubmit={async (reason) => {
+          await reportUser.mutateAsync({
+            targetPhoneNumber: reportTarget!.phoneNumber,
+            reason,
+          });
+        }}
+      />
     </div>
   );
 }

@@ -38,6 +38,9 @@ const jwtRoutes = require("../routes/JwtRoutes.js");
 const authRoutes = require("../routes/AuthRoutes.js");
 const cloudinaryRoutes = require("../routes/CloudinaryRoutes.js");
 const resendVerifyRoutes = require("../routes/ResendVerifyRoutes.js");
+const reactionRoutes = require("../routes/ReactionRoutes.js");
+const reportRoutes = require("../routes/ReportRoutes.js");
+const notificationRoutes = require("../routes/NotificationRoutes.js");
 
 const mongoDburl = process.env.MONGO_DB_URL;
 const port = process.env.PORT;
@@ -88,9 +91,10 @@ async function setupSystem() {
     //Jwt Manager
     await setupJwtManager();
 
-    //Media (Cloudinary) + email OTP (Resend) providers — self-configure from env.
+    //Media (Cloudinary) + email OTP (Resend) + web-push providers — self-configure from env.
     ManagerFactory.getCloudinaryManager();
     ManagerFactory.getResendManager();
+    ManagerFactory.getNotificationPushManager();
   } catch (exception) {
     LoggerFactory.getApplicationLogger.error(`Exception Occured ${exception}`);
 
@@ -151,6 +155,9 @@ function setupRoutes() {
     SignetixApp.use("/auth", authLimiter, authRoutes);
     SignetixApp.use("/cloudinary", cloudinaryRoutes);
     SignetixApp.use("/resend", otpLimiter, resendVerifyRoutes);
+    SignetixApp.use("/reactions", reactionRoutes);
+    SignetixApp.use("/reports", reportRoutes);
+    SignetixApp.use("/notifications", notificationRoutes);
 
     return SignetixApp;
   } catch (exception) {

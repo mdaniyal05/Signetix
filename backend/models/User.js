@@ -7,6 +7,13 @@ const UserSchema = new mongoose.Schema({
   password: { type: String, required: true },
   profilePicture: { type: String },
   profileStatus: { type: String },
+  blockedUsers: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+  pushSubscriptions: [
+    {
+      endpoint: { type: String, required: true },
+      keys: { p256dh: { type: String }, auth: { type: String } },
+    },
+  ],
   createdAt: { type: Date, required: true, default: Date.now },
   updatedAt: { type: Date, required: true, default: Date.now },
 });

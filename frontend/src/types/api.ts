@@ -72,6 +72,14 @@ export interface MessageReplyRef {
   senderId: UserRef;
 }
 
+export type ReactionType = "like" | "love" | "laugh";
+
+export interface Reaction {
+  _id: string;
+  userId: string;
+  type: ReactionType;
+}
+
 export interface Message {
   _id: string;
   senderId: UserRef;
@@ -88,6 +96,7 @@ export interface Message {
   isDeleted?: boolean;
   isRead?: boolean;
   replyToId?: MessageReplyRef | null;
+  reactions?: Reaction[];
 }
 
 export interface ChatHistory {

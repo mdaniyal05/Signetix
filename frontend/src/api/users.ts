@@ -1,5 +1,5 @@
 import { api } from "./client";
-import type { User } from "@/types/api";
+import type { User, UserRef } from "@/types/api";
 
 const enc = encodeURIComponent;
 
@@ -19,4 +19,14 @@ export const usersApi = {
 
   update: (payload: UpdateUserPayload) =>
     api.put<User>("/users/update", payload),
+
+  getBlocked: (phoneNumber: string) =>
+    api.get<UserRef[]>(`/users/blocked/${enc(phoneNumber)}`),
+
+  block: (phoneNumber: string, targetPhoneNumber: string, block: boolean) =>
+    api.post<{ blockedUsers: string[] }>("/users/block", {
+      phoneNumber,
+      targetPhoneNumber,
+      block,
+    }),
 };
