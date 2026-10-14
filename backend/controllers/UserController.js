@@ -318,6 +318,20 @@ class UserController {
 
       if (userObjectValidation) return userObjectValidation;
 
+      // Ownership: a user may only update their own record (prevents IDOR via phoneNumber).
+      if (
+        request.authUserId != null &&
+        existingUserObject._id.toString() !== request.authUserId
+      ) {
+        const forbidden = new SignetixException(
+          403,
+          "You can only update your own profile."
+        );
+        return response
+          .status(forbidden.status)
+          .json(forbidden.loadResult());
+      }
+
       const updateUserDto = new UpdateUserDto(
         existingUserObject._id.toString(),
         request.body?.name,
@@ -327,11 +341,8 @@ class UserController {
         request.body?.profileStatus
       );
 
-      //encrypt the new password
-      if (
-        updateUserDto.password != null ||
-        updateUserDto.password != undefined
-      ) {
+      //encrypt the new password (only when one was actually provided)
+      if (updateUserDto.password != null) {
         updateUserDto.password = await Encrypt.encrypt(
           this.#saltRoundForEncryption,
           updateUserDto.password

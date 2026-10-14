@@ -4,6 +4,8 @@ require("reflect-metadata");
 const express = require("express");
 const http = require("http");
 const cors = require("cors");
+const helmet = require("helmet");
+const { rateLimit } = require("express-rate-limit");
 
 const WebSocketManager = require("../managers/websocketManager.js");
 const EventFactory = require("../factories/eventFactory.js");
@@ -104,12 +106,24 @@ function setupRoutes() {
     SignetixApp.disable("x-powered-by");
     SignetixApp.set("trust proxy", 1);
 
+    // Security headers (HSTS, no-sniff, frame denial, etc.).
+    SignetixApp.use(helmet());
+
     // CORS for REST: allowlist via CORS_ALLOWED_ORIGINS (comma-separated); if unset,
     // reflect the request origin (dev convenience).
     SignetixApp.use(cors(buildCorsOptions()));
 
     SignetixApp.use(express.json({ limit: "1mb" }));
     SignetixApp.use(express.urlencoded({ extended: true, limit: "1mb" }));
+
+    // Strip NoSQL-injection operators ($ / .) from request input before it hits Mongoose.
+    SignetixApp.use(sanitizeRequest);
+
+    // Rate limiting: lenient global cap (skips the health-check root), stricter on
+    // auth + OTP (brute-force / abuse).
+    SignetixApp.use(buildRateLimiter(15 * 60 * 1000, 600, true));
+    const authLimiter = buildRateLimiter(15 * 60 * 1000, 30);
+    const otpLimiter = buildRateLimiter(15 * 60 * 1000, 10);
 
     SignetixApp.get("/", (req, res) => {
       res.status(200);
@@ -131,12 +145,12 @@ function setupRoutes() {
     SignetixApp.use("/callHistory", callHistoryRoutes);
     SignetixApp.use("/settings", settingsRoutes);
     SignetixApp.use("/userAuthentication", userAuthenticationRoutes);
-    SignetixApp.use("/twilio", twilioOtpRoutes);
+    SignetixApp.use("/twilio", otpLimiter, twilioOtpRoutes);
     SignetixApp.use("/amazon", amazonS3Routes);
-    SignetixApp.use("/jwt", jwtRoutes);
-    SignetixApp.use("/auth", authRoutes);
+    SignetixApp.use("/jwt", authLimiter, jwtRoutes);
+    SignetixApp.use("/auth", authLimiter, authRoutes);
     SignetixApp.use("/cloudinary", cloudinaryRoutes);
-    SignetixApp.use("/resend", resendVerifyRoutes);
+    SignetixApp.use("/resend", otpLimiter, resendVerifyRoutes);
 
     return SignetixApp;
   } catch (exception) {
@@ -182,15 +196,58 @@ function getApplicationLogger() {
   return LoggerFactory.getApplicationLogger;
 }
 
-// REST CORS options: explicit allowlist in prod, reflect-origin in dev when unset.
+// Rate limiter factory (per-IP; trust-proxy is set so req.ip is the real client).
+function buildRateLimiter(windowMs, max, skipHealthCheck = false) {
+  return rateLimit({
+    windowMs,
+    max,
+    standardHeaders: true,
+    legacyHeaders: false,
+    skip: skipHealthCheck ? (request) => request.path === "/" : undefined,
+    message: {
+      exception: "Too many requests, please try again later.",
+      code: "RATE_LIMITED",
+    },
+  });
+}
+
+// Defensive NoSQL-injection guard: drop any Mongo operator keys ($… or with a dot)
+// from mutable request input so a body like { phoneNumber: { $gt: "" } } can't match.
+function sanitizeRequest(request, response, next) {
+  stripOperators(request.body);
+  stripOperators(request.params);
+  next();
+}
+
+function stripOperators(value) {
+  if (value == null || typeof value !== "object") return;
+  for (const key of Object.keys(value)) {
+    if (key.startsWith("$") || key.includes(".")) {
+      delete value[key];
+      continue;
+    }
+    stripOperators(value[key]);
+  }
+}
+
+// REST CORS options: explicit allowlist always honoured. When unset, reflect the
+// origin in dev (convenience) but BLOCK cross-origin in production (reflecting any
+// origin with credentials is unsafe) — set CORS_ALLOWED_ORIGINS in prod.
 function buildCorsOptions() {
   const allowedOrigins = (process.env.CORS_ALLOWED_ORIGINS ?? "")
     .split(",")
     .map((origin) => origin.trim())
     .filter(Boolean);
 
-  return {
-    origin: allowedOrigins.length > 0 ? allowedOrigins : true,
-    credentials: true,
-  };
+  if (allowedOrigins.length > 0) {
+    return { origin: allowedOrigins, credentials: true };
+  }
+
+  const isProduction = process.env.NODE_ENV === "production";
+  if (isProduction) {
+    console.warn(
+      "[security] CORS_ALLOWED_ORIGINS is not set in production — blocking cross-origin requests. Set it to your frontend origin(s)."
+    );
+  }
+  return { origin: isProduction ? false : true, credentials: true };
 }

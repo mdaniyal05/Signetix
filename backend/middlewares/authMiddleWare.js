@@ -7,6 +7,7 @@ class AuthMiddleWare {
   #excludedPaths = null;
 
   constructor() {
+    // Only unauthenticated flows (signup, login, token refresh, OTP) are exempt.
     this.#excludedPaths = [
       AuthConstants.AUTH_USERS_CREATE,
       AuthConstants.AUTH_USERS_LOGIN,
@@ -15,7 +16,6 @@ class AuthMiddleWare {
       AuthConstants.TWILIO_VERIFY,
       AuthConstants.RESEND_GET,
       AuthConstants.RESEND_VERIFY,
-      AuthConstants.UPDATE_USER,
     ];
   }
 
@@ -55,6 +55,8 @@ class AuthMiddleWare {
     LoggerFactory.getApplicationLogger.info(
       `Access token is valid: ${JSON.stringify(accessTokenVerification)}`
     );
+    // Expose the authenticated identity so controllers can enforce ownership.
+    request.authUserId = accessTokenVerification.data?.userId ?? null;
     //the validation is done - move to the next one
     next();
   }
