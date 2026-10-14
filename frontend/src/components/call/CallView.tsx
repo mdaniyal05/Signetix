@@ -5,6 +5,8 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { VIDEOSDK_TOKEN } from "@/config/env";
+import { useAuth } from "@/auth/AuthContext";
+import { useSettings } from "@/hooks/useSettings";
 
 import { CaptionBar } from "@/components/recognition/CaptionBar";
 import { RecognitionStatus } from "@/components/recognition/RecognitionStatus";
@@ -40,6 +42,11 @@ export function CallView({ meetingId, onLeave }: CallViewProps) {
   const [joinError, setJoinError] = useState<string | null>(null);
   const [recognitionOn, setRecognitionOn] = useState(true);
   const [speechOn, setSpeechOn] = useState(true);
+
+  // Caption/transcript/speech language follows the user's PSL preference.
+  const { session } = useAuth();
+  const { data: settings } = useSettings(session?.phoneNumber);
+  const language = settings?.pslTranslationLanguage ?? "English";
 
   const {
     join,
@@ -128,8 +135,8 @@ export function CallView({ meetingId, onLeave }: CallViewProps) {
     enabled: recognitionOn && localWebcamOn,
   });
 
-  // Speak each newly recognized sign out loud (when enabled).
-  useSignSpeech(recognition.latest, speechOn && recognitionOn);
+  // Speak each newly recognized sign out loud (when enabled), in the chosen language.
+  useSignSpeech(recognition.latest, speechOn && recognitionOn, language);
 
   if (joinError) {
     return (
@@ -175,6 +182,7 @@ export function CallView({ meetingId, onLeave }: CallViewProps) {
             <TranscriptPanel
               transcript={recognition.transcript}
               sentence={recognition.sentence}
+              language={language}
               onClear={recognition.clearTranscript}
             />
           </div>
@@ -185,6 +193,7 @@ export function CallView({ meetingId, onLeave }: CallViewProps) {
         <CaptionBar
           latest={recognition.latest}
           isSigning={recognition.isSigning}
+          language={language}
         />
       )}
 

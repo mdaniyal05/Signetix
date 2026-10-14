@@ -12,6 +12,7 @@ import { useAuth } from "@/auth/AuthContext";
 import { cloudinaryApi } from "@/api/cloudinary";
 import { UserAvatar } from "@/components/common/UserAvatar";
 import { MessageBubble } from "@/components/chat/MessageBubble";
+import { ForwardDialog } from "@/components/chat/ForwardDialog";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
@@ -37,6 +38,7 @@ export function ChatWindow({ chatId, chat, onBack }: ChatWindowProps) {
 
   const [draft, setDraft] = useState("");
   const [replyTo, setReplyTo] = useState<Message | null>(null);
+  const [forwarding, setForwarding] = useState<Message | null>(null);
   const [uploading, setUploading] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const markedRef = useRef<Set<string>>(new Set());
@@ -208,6 +210,7 @@ export function ChatWindow({ chatId, chat, onBack }: ChatWindowProps) {
                 message={message}
                 isOwn={message.senderId?._id === myId}
                 onReply={setReplyTo}
+                onForward={setForwarding}
                 onDelete={(id) => actions.remove.mutate(id)}
                 onTogglePin={(m) =>
                   actions.pin.mutate({
@@ -275,6 +278,17 @@ export function ChatWindow({ chatId, chat, onBack }: ChatWindowProps) {
           )}
         </Button>
       </div>
+
+      <ForwardDialog
+        message={forwarding}
+        onClose={() => setForwarding(null)}
+        onForward={async (targetPhone) => {
+          await actions.forward.mutateAsync({
+            messageId: forwarding!._id,
+            targetUserPhoneNumbers: [targetPhone],
+          });
+        }}
+      />
     </div>
   );
 }

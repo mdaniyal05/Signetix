@@ -1,14 +1,22 @@
 import { cn } from "@/lib/utils";
+import { signLabel } from "@/lib/psl-translations";
+import type { PslLanguage } from "@/types/api";
 import type { TranscriptEntry } from "@/types/recognition";
 
 interface CaptionBarProps {
   latest: TranscriptEntry | null;
   isSigning: boolean;
+  language?: PslLanguage;
   className?: string;
 }
 
 /** Large overlay caption showing the most recently recognized word. */
-export function CaptionBar({ latest, isSigning, className }: CaptionBarProps) {
+export function CaptionBar({
+  latest,
+  isSigning,
+  language = "English",
+  className,
+}: CaptionBarProps) {
   return (
     <div
       className={cn(
@@ -19,7 +27,7 @@ export function CaptionBar({ latest, isSigning, className }: CaptionBarProps) {
       {latest ? (
         <div className="pointer-events-auto flex items-center gap-3 rounded-full bg-black/70 px-6 py-3 text-white backdrop-blur-sm">
           <span className="text-xl font-semibold capitalize">
-            {latest.word.replace(/_/g, " ")}
+            {signLabel(latest.word, language)}
           </span>
           <span className="text-sm text-white/70">
             {Math.round(latest.confidence * 100)}%

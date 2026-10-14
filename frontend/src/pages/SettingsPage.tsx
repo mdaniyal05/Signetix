@@ -58,7 +58,13 @@ export function SettingsPage() {
         </p>
       </div>
 
-      <ProfileCard />
+      <ProfileCard
+        phone={phone}
+        name={session?.name ?? ""}
+        status={session?.profileStatus ?? ""}
+        profilePicture={session?.profilePicture}
+        patchSession={patchSession}
+      />
 
       <Card>
         <CardHeader>
@@ -96,7 +102,7 @@ export function SettingsPage() {
 
               <SettingRow
                 label="PSL translation language"
-                description="Language for sign translations"
+                description="Language for recognized sign captions and speech"
               >
                 <Select
                   value={settings.pslTranslationLanguage}
@@ -109,7 +115,7 @@ export function SettingsPage() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="English">English</SelectItem>
-                    <SelectItem value="Urdu">Urdu</SelectItem>
+                    <SelectItem value="Urdu">Urdu (اردو)</SelectItem>
                   </SelectContent>
                 </Select>
               </SettingRow>
@@ -143,114 +149,142 @@ export function SettingsPage() {
       </Card>
     </div>
   );
+}
 
-  function ProfileCard() {
-    const [name, setName] = useState(session?.name ?? "");
-    const [saving, setSaving] = useState(false);
-    const [uploadingPhoto, setUploadingPhoto] = useState(false);
-    const fileInputRef = useRef<HTMLInputElement>(null);
+interface ProfileCardProps {
+  phone: string;
+  name: string;
+  status: string;
+  profilePicture?: string;
+  patchSession: ReturnType<typeof useAuth>["patchSession"];
+}
 
-    const onPickPhoto = async (event: React.ChangeEvent<HTMLInputElement>) => {
-      const file = event.target.files?.[0];
-      event.target.value = ""; // allow re-selecting the same file
-      if (!file) return;
-      if (!file.type.startsWith("image/")) {
-        toast.error("Please choose an image file");
-        return;
-      }
-      setUploadingPhoto(true);
-      try {
-        const url = await cloudinaryApi.uploadProfilePicture(phone, file);
-        await usersApi.update({ phoneNumber: phone, profilePicture: url });
-        patchSession({ profilePicture: url });
-        toast.success("Photo updated");
-      } catch (error) {
-        toast.error("Could not update photo", {
-          description: error instanceof Error ? error.message : undefined,
-        });
-      } finally {
-        setUploadingPhoto(false);
-      }
-    };
+function ProfileCard({
+  phone,
+  name: initialName,
+  status: initialStatus,
+  profilePicture,
+  patchSession,
+}: ProfileCardProps) {
+  const [name, setName] = useState(initialName);
+  const [status, setStatus] = useState(initialStatus);
+  const [saving, setSaving] = useState(false);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-    const save = async () => {
-      if (!name.trim()) return;
-      setSaving(true);
-      try {
-        await usersApi.update({ phoneNumber: phone, name: name.trim() });
-        patchSession({ name: name.trim() });
-        toast.success("Profile updated");
-      } catch (error) {
-        toast.error("Could not update profile", {
-          description: error instanceof Error ? error.message : undefined,
-        });
-      } finally {
-        setSaving(false);
-      }
-    };
+  const onPickPhoto = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = ""; // allow re-selecting the same file
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please choose an image file");
+      return;
+    }
+    setUploadingPhoto(true);
+    try {
+      const url = await cloudinaryApi.uploadProfilePicture(phone, file);
+      await usersApi.update({ phoneNumber: phone, profilePicture: url });
+      patchSession({ profilePicture: url });
+      toast.success("Photo updated");
+    } catch (error) {
+      toast.error("Could not update photo", {
+        description: error instanceof Error ? error.message : undefined,
+      });
+    } finally {
+      setUploadingPhoto(false);
+    }
+  };
 
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Profile</CardTitle>
-          <CardDescription>Your public information</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center gap-4">
-            <div className="relative">
-              <UserAvatar
-                name={session?.name ?? "User"}
-                src={session?.profilePicture}
-                className="size-16"
-              />
-              {uploadingPhoto && (
-                <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/50">
-                  <Loader2 className="size-5 animate-spin text-white" />
-                </div>
-              )}
-            </div>
-            <div>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={onPickPhoto}
-              />
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={uploadingPhoto}
-              >
-                <Camera className="size-4" />
-                Change photo
-              </Button>
-            </div>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="profile-name">Name</Label>
-            <Input
-              id="profile-name"
-              value={name}
-              onChange={(event) => setName(event.target.value)}
+  const dirty = name.trim() !== initialName || status.trim() !== initialStatus;
+
+  const save = async () => {
+    if (!name.trim() || !dirty) return;
+    setSaving(true);
+    try {
+      await usersApi.update({
+        phoneNumber: phone,
+        name: name.trim(),
+        profileStatus: status.trim(),
+      });
+      patchSession({ name: name.trim(), profileStatus: status.trim() });
+      toast.success("Profile updated");
+    } catch (error) {
+      toast.error("Could not update profile", {
+        description: error instanceof Error ? error.message : undefined,
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Profile</CardTitle>
+        <CardDescription>Your public information</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="flex items-center gap-4">
+          <div className="relative">
+            <UserAvatar
+              name={name || "User"}
+              src={profilePicture}
+              className="size-16"
             />
+            {uploadingPhoto && (
+              <div className="absolute inset-0 flex items-center justify-center rounded-full bg-black/50">
+                <Loader2 className="size-5 animate-spin text-white" />
+              </div>
+            )}
           </div>
-          <div className="space-y-2">
-            <Label>Phone number</Label>
-            <Input value={phone} disabled />
+          <div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={onPickPhoto}
+            />
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploadingPhoto}
+            >
+              <Camera className="size-4" />
+              Change photo
+            </Button>
           </div>
-          <Button
-            onClick={save}
-            disabled={saving || name.trim() === session?.name}
-          >
-            {saving && <Loader2 className="animate-spin" />}
-            Save changes
-          </Button>
-        </CardContent>
-      </Card>
-    );
-  }
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="profile-name">Name</Label>
+          <Input
+            id="profile-name"
+            value={name}
+            onChange={(event) => setName(event.target.value)}
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="profile-status">Status</Label>
+          <Input
+            id="profile-status"
+            placeholder="Available"
+            maxLength={80}
+            value={status}
+            onChange={(event) => setStatus(event.target.value)}
+          />
+        </div>
+        <div className="space-y-2">
+          <Label>Phone number</Label>
+          <Input value={phone} disabled />
+        </div>
+        <Button onClick={save} disabled={saving || !name.trim() || !dirty}>
+          {saving && <Loader2 className="animate-spin" />}
+          Save changes
+        </Button>
+      </CardContent>
+    </Card>
+  );
 }
 
 function SettingRow({

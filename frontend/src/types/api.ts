@@ -41,6 +41,7 @@ export interface AuthSession {
   accessToken: string;
   refreshToken: string;
   profilePicture?: string;
+  profileStatus?: string;
   isVerified?: boolean;
 }
 

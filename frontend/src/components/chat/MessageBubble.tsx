@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { MoreVertical, Pin, Reply } from "lucide-react";
+import { Check, CheckCheck, Forward, MoreVertical, Pin, Reply } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -19,6 +19,7 @@ interface MessageBubbleProps {
   onReply: (message: Message) => void;
   onDelete: (messageId: string) => void;
   onTogglePin: (message: Message) => void;
+  onForward: (message: Message) => void;
   onSaveEdit: (messageId: string, newContent: string) => void;
 }
 
@@ -28,6 +29,7 @@ export function MessageBubble({
   onReply,
   onDelete,
   onTogglePin,
+  onForward,
   onSaveEdit,
 }: MessageBubbleProps) {
   const [editing, setEditing] = useState(false);
@@ -57,6 +59,7 @@ export function MessageBubble({
           onReply={onReply}
           onDelete={onDelete}
           onTogglePin={onTogglePin}
+          onForward={onForward}
           onEdit={() => {
             setDraft(message.content);
             setEditing(true);
@@ -144,6 +147,12 @@ export function MessageBubble({
           {message.isPinned && <Pin className="size-3" />}
           {message.isEdited && <span>edited</span>}
           <span>{formatTime(message.createdAt)}</span>
+          {isOwn &&
+            (message.isRead ? (
+              <CheckCheck className="size-3.5" aria-label="Read" />
+            ) : (
+              <Check className="size-3.5" aria-label="Sent" />
+            ))}
         </div>
       </div>
 
@@ -154,6 +163,7 @@ export function MessageBubble({
           onReply={onReply}
           onDelete={onDelete}
           onTogglePin={onTogglePin}
+          onForward={onForward}
         />
       )}
     </div>
@@ -199,6 +209,7 @@ function MessageMenu({
   onReply,
   onDelete,
   onTogglePin,
+  onForward,
   onEdit,
 }: {
   message: Message;
@@ -206,6 +217,7 @@ function MessageMenu({
   onReply: (message: Message) => void;
   onDelete: (messageId: string) => void;
   onTogglePin: (message: Message) => void;
+  onForward: (message: Message) => void;
   onEdit?: () => void;
 }) {
   return (
@@ -224,6 +236,10 @@ function MessageMenu({
         <DropdownMenuItem onClick={() => onReply(message)}>
           <Reply />
           Reply
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => onForward(message)}>
+          <Forward />
+          Forward
         </DropdownMenuItem>
         <DropdownMenuItem onClick={() => onTogglePin(message)}>
           <Pin />

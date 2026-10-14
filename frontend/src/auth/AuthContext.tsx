@@ -43,6 +43,7 @@ function toSession(response: AuthResponse): AuthSession {
     accessToken: response.accessToken,
     refreshToken: response.userAuthenticationRecord?.refreshToken ?? "",
     profilePicture: response.profilePicture,
+    profileStatus: response.profileStatus,
     isVerified: response.userAuthenticationRecord?.isVerified,
   };
 }

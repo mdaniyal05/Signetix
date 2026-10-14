@@ -19,7 +19,7 @@ export function ChatsPage() {
       <div className={cn("h-full min-h-0", chatId && "hidden sm:block")}>
         <ChatList
           activeChatId={chatId}
-          onSelect={(id) => navigate(`/chats/${id}`)}
+          onSelect={(id) => navigate(id ? `/chats/${id}` : "/chats")}
         />
       </div>
       <div className={cn("h-full min-h-0", !chatId && "hidden sm:block")}>

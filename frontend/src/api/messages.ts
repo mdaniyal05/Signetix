@@ -26,6 +26,17 @@ export const messagesApi = {
   edit: (senderPhoneNumber: string, messageId: string, newContent: string) =>
     api.put("/messages/edit", { senderPhoneNumber, messageId, newContent }),
 
+  forward: (
+    senderPhoneNumber: string,
+    messageId: string,
+    targetUserPhoneNumbers: string[],
+  ) =>
+    api.post<{ chatId: string }>("/messages/forward", {
+      senderPhoneNumber,
+      messageId,
+      targetUserPhoneNumbers,
+    }),
+
   remove: (senderPhoneNumber: string, messageId: string) =>
     api.del("/messages/delete", { senderPhoneNumber, messageId }),
 

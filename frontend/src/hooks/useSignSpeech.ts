@@ -1,5 +1,7 @@
 import { useEffect, useRef } from "react";
 
+import { signLabel, speechLangFor } from "@/lib/psl-translations";
+import type { PslLanguage } from "@/types/api";
 import type { TranscriptEntry } from "@/types/recognition";
 
 /** True when the browser supports the Web Speech synthesis API. */
@@ -18,6 +20,7 @@ const SAME_WORD_COOLDOWN_MS = 1500;
 export function useSignSpeech(
   latest: TranscriptEntry | null,
   enabled: boolean,
+  language: PslLanguage = "English",
 ): void {
   const lastSpokenId = useRef<string | null>(null);
   const lastSpoken = useRef<{ word: string; at: number }>({ word: "", at: 0 });
@@ -39,12 +42,12 @@ export function useSignSpeech(
     lastSpoken.current = { word: latest.word, at: now };
 
     const utterance = new SpeechSynthesisUtterance(
-      latest.word.replace(/_/g, " "),
+      signLabel(latest.word, language),
     );
-    utterance.lang = "en-US";
+    utterance.lang = speechLangFor(language);
     window.speechSynthesis.cancel(); // drop any queued word; speak the newest
     window.speechSynthesis.speak(utterance);
-  }, [latest, enabled]);
+  }, [latest, enabled, language]);
 
   // Stop any in-progress speech when speech is turned off or the component unmounts.
   useEffect(() => {

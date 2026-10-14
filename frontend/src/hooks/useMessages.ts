@@ -76,5 +76,20 @@ export function useMessageActions(
     onSuccess: notifyAndInvalidate,
   });
 
-  return { send, edit, remove, pin, markRead };
+  // Forwarding goes to a different chat; invalidate my list and ping those recipients.
+  const forward = useMutation({
+    mutationFn: (vars: { messageId: string; targetUserPhoneNumbers: string[] }) =>
+      messagesApi.forward(phoneNumber, vars.messageId, vars.targetUserPhoneNumbers),
+    onSuccess: (data, vars) => {
+      queryClient.invalidateQueries({ queryKey: chatKeys.list(phoneNumber) });
+      if (socket && data?.chatId && vars.targetUserPhoneNumbers.length > 0) {
+        socket.emit("chat-activity", {
+          chatId: data.chatId,
+          targetPhoneNumbers: vars.targetUserPhoneNumbers,
+        });
+      }
+    },
+  });
+
+  return { send, edit, remove, pin, markRead, forward };
 }
