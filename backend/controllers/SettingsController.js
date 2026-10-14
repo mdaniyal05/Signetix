@@ -215,11 +215,7 @@ class SettingsController {
             pslTranslationLanguage:
               updateSettingsDto.pslTranslationLanguage == null
                 ? existingAccessibilitySettingsObject.pslTranslationLanguage
-                : ControllerConstants
-                    .ACCESSIBILITY_SETTINGS_PSL_TRANSLATE_DICT_REVERSE[
-                    updateSettingsDto.pslTranslationLanguage
-                  ],
-            notificationEnabled: updateSettingsDto.notificationEnabled,
+                : updateSettingsDto.pslTranslationLanguage,
             updatedAt: Date.now(),
           },
           mongooseSession
@@ -303,10 +299,15 @@ class SettingsController {
   }
 
   async #updateEnumValue(data) {
-    data[ControllerConstants.PSL_TRANSLATION_LANGUAGE_KEY] =
-      ControllerConstants.ACCESSIBILITY_SETTINGS_PSL_TRANSLATE_DICT[
-        data[ControllerConstants.PSL_TRANSLATION_LANGUAGE_KEY]
-      ];
+    // Settings store the enum string ("English"/"Urdu"). Only normalize a legacy
+    // numeric code (0/1) back to the string; leave the string value untouched.
+    const key = ControllerConstants.PSL_TRANSLATION_LANGUAGE_KEY;
+    if (typeof data[key] === "number") {
+      data[key] =
+        ControllerConstants.ACCESSIBILITY_SETTINGS_PSL_TRANSLATE_DICT_REVERSE[
+          data[key]
+        ] ?? "English";
+    }
 
     return data;
   }
