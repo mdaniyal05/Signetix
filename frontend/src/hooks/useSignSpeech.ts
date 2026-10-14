@@ -24,6 +24,19 @@ export function useSignSpeech(
 ): void {
   const lastSpokenId = useRef<string | null>(null);
   const lastSpoken = useRef<{ word: string; at: number }>({ word: "", at: 0 });
+  const voicesRef = useRef<SpeechSynthesisVoice[]>([]);
+
+  // Voices load asynchronously; keep the latest list so we can pick a real one.
+  useEffect(() => {
+    if (!speechSupported()) return;
+    const load = () => {
+      voicesRef.current = window.speechSynthesis.getVoices();
+    };
+    load();
+    window.speechSynthesis.addEventListener?.("voiceschanged", load);
+    return () =>
+      window.speechSynthesis.removeEventListener?.("voiceschanged", load);
+  }, []);
 
   useEffect(() => {
     if (!latest) return;
@@ -41,10 +54,27 @@ export function useSignSpeech(
     if (isDuplicate) return;
     lastSpoken.current = { word: latest.word, at: now };
 
-    const utterance = new SpeechSynthesisUtterance(
-      signLabel(latest.word, language),
-    );
-    utterance.lang = speechLangFor(language);
+    const voices = voicesRef.current.length
+      ? voicesRef.current
+      : window.speechSynthesis.getVoices();
+    const findVoice = (tag: string) =>
+      voices.find((v) => v.lang?.toLowerCase().startsWith(tag.toLowerCase()));
+
+    let text = signLabel(latest.word, language);
+    let lang = speechLangFor(language);
+    let voice = findVoice(lang.split("-")[0]);
+
+    // Many browsers have no Urdu voice → speaking ur-PK is silent. Fall back to
+    // the English label with an English voice so the sign is still read aloud.
+    if (!voice && language === "Urdu") {
+      text = signLabel(latest.word, "English");
+      lang = "en-US";
+      voice = findVoice("en");
+    }
+
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = lang;
+    if (voice) utterance.voice = voice;
     window.speechSynthesis.cancel(); // drop any queued word; speak the newest
     window.speechSynthesis.speak(utterance);
   }, [latest, enabled, language]);
