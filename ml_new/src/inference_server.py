@@ -63,40 +63,73 @@ async def recognition_socket(websocket: WebSocket) -> None:
     was_signing = False
     print("Client connected.")
 
+    # A receiver task keeps only the newest frame; the processor always works on it and
+    # drops anything that piled up, so latency stays bounded (no backlog) over a slow link.
+    state: dict = {"latest": None, "seq": 0, "disconnected": False}
+
+    async def receiver() -> None:
+        try:
+            while True:
+                message = await websocket.receive_json()
+                if message.get("type") == "frame":
+                    state["latest"] = message
+                    state["seq"] += 1
+        except WebSocketDisconnect:
+            state["disconnected"] = True
+        except Exception as exception:  # noqa: BLE001
+            print(f"receiver error: {exception}")
+            state["disconnected"] = True
+
+    receive_task = asyncio.create_task(receiver())
+    last_seq = 0
+
     try:
         while True:
-            message = await websocket.receive_json()
-            if message.get("type") != "frame":
+            if state["seq"] == last_seq:
+                if state["disconnected"]:
+                    break
+                await asyncio.sleep(0.005)
                 continue
 
-            frame = _decode_frame(message["data"])
-            if frame is None:
-                continue
+            last_seq = state["seq"]
+            message = state["latest"]
 
-            # Use the client's capture time if given; run blocking work off the loop.
-            timestamp = float(message.get("t", time.monotonic()))
-            prediction = await asyncio.to_thread(
-                recognizer.process_frame, frame, timestamp
-            )
+            # One bad frame/send must not kill the connection.
+            try:
+                frame = _decode_frame(message["data"])
+                if frame is None:
+                    continue
 
-            if recognizer.is_signing != was_signing:
-                was_signing = recognizer.is_signing
-                await websocket.send_json({"type": "status", "signing": was_signing})
-
-            if prediction is not None:
-                await websocket.send_json(
-                    {
-                        "type": "prediction",
-                        "word": prediction.word,
-                        "confidence": round(prediction.confidence, 3),
-                        "duration": round(prediction.duration, 2),
-                    }
+                timestamp = float(message.get("t", time.monotonic()))
+                prediction = await asyncio.to_thread(
+                    recognizer.process_frame, frame, timestamp
                 )
-                print(f"-> {prediction.word} ({prediction.confidence:.2f})")
-    except WebSocketDisconnect:
-        print("Client disconnected.")
+
+                if recognizer.is_signing != was_signing:
+                    was_signing = recognizer.is_signing
+                    await websocket.send_json(
+                        {"type": "status", "signing": was_signing}
+                    )
+
+                if prediction is not None:
+                    await websocket.send_json(
+                        {
+                            "type": "prediction",
+                            "word": prediction.word,
+                            "confidence": round(prediction.confidence, 3),
+                            "duration": round(prediction.duration, 2),
+                        }
+                    )
+                    print(f"-> {prediction.word} ({prediction.confidence:.2f})")
+            except WebSocketDisconnect:
+                break
+            except Exception as exception:  # noqa: BLE001
+                print(f"frame error: {exception}")
+                continue
     finally:
+        receive_task.cancel()
         recognizer.close()
+        print("Client disconnected.")
 
 
 if __name__ == "__main__":

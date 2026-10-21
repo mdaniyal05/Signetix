@@ -77,7 +77,8 @@ MIN_PER_WORD_ACCURACY: float = 0.60
 
 # Real-time inference (segment-on-rest, mirrors training).
 INFERENCE_CONFIDENCE_THRESHOLD: float = 0.60
-# Longer than the training segmentation rest so brief live hand-tracking dropouts
-# (motion blur / occlusion) don't split one sign into two; real rests are ~1s.
-INFERENCE_REST_MIN_DURATION_SEC: float = 0.7
-INFERENCE_MIN_SIGN_FRAMES: int = 5
+# Rest gap before a sign finalizes: lower = faster caption after you stop signing,
+# but too low can split one sign into two on brief hand-tracking dropouts.
+INFERENCE_REST_MIN_DURATION_SEC: float = 0.5
+# Floor on hand frames per sign; kept low to suit the ~10fps capture rate.
+INFERENCE_MIN_SIGN_FRAMES: int = 4

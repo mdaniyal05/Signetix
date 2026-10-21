@@ -62,14 +62,18 @@ export function usePslRecognition({
     videoRef.current = video;
     canvasRef.current = document.createElement("canvas");
 
-    dispatch({ type: "connection", status: "connecting" });
-    const socket = new WebSocket(serverUrl);
-    socketRef.current = socket;
-
     const sampleIntervalMs = Math.max(1, Math.round(1000 / fps));
+    // Skip sending while the socket is backed up so latency can't accumulate.
+    const MAX_BUFFERED_BYTES = 64 * 1024;
+
+    let cleanedUp = false;
+    let reconnectTimer: number | null = null;
+    let attempts = 0;
 
     const sendFrame = () => {
-      if (socket.readyState !== WebSocket.OPEN) return;
+      const socket = socketRef.current;
+      if (!socket || socket.readyState !== WebSocket.OPEN) return;
+      if (socket.bufferedAmount > MAX_BUFFERED_BYTES) return;
       const canvas = canvasRef.current;
       if (!canvas) return;
       const data = captureJpegBase64(video, canvas, frameWidth);
@@ -79,24 +83,50 @@ export function usePslRecognition({
       );
     };
 
-    socket.onopen = () => {
-      dispatch({ type: "connection", status: "open" });
-      intervalRef.current = window.setInterval(sendFrame, sampleIntervalMs);
+    const connect = () => {
+      dispatch({ type: "connection", status: "connecting" });
+      const socket = new WebSocket(serverUrl);
+      socketRef.current = socket;
+
+      socket.onopen = () => {
+        attempts = 0;
+        dispatch({ type: "connection", status: "open" });
+        if (intervalRef.current !== null) window.clearInterval(intervalRef.current);
+        intervalRef.current = window.setInterval(sendFrame, sampleIntervalMs);
+      };
+      socket.onmessage = (event: MessageEvent<string>) => {
+        const message = parseServerMessage(event.data);
+        if (message) dispatch({ type: "message", message, at: Date.now() });
+      };
+      socket.onerror = () => dispatch({ type: "connection", status: "error" });
+      socket.onclose = () => {
+        if (intervalRef.current !== null) {
+          window.clearInterval(intervalRef.current);
+          intervalRef.current = null;
+        }
+        if (cleanedUp) return;
+        // Auto-reconnect with capped backoff (survives a dropped tunnel/server blip).
+        dispatch({ type: "connection", status: "connecting" });
+        const delay = Math.min(500 * 2 ** attempts, 5000);
+        attempts += 1;
+        reconnectTimer = window.setTimeout(connect, delay);
+      };
     };
-    socket.onmessage = (event: MessageEvent<string>) => {
-      const message = parseServerMessage(event.data);
-      if (message) dispatch({ type: "message", message, at: Date.now() });
-    };
-    socket.onerror = () => dispatch({ type: "connection", status: "error" });
-    socket.onclose = () => dispatch({ type: "connection", status: "closed" });
+
+    connect();
 
     return () => {
+      cleanedUp = true;
+      if (reconnectTimer !== null) window.clearTimeout(reconnectTimer);
       if (intervalRef.current !== null) {
         window.clearInterval(intervalRef.current);
         intervalRef.current = null;
       }
-      socket.onopen = socket.onmessage = socket.onerror = socket.onclose = null;
-      socket.close();
+      const socket = socketRef.current;
+      if (socket) {
+        socket.onopen = socket.onmessage = socket.onerror = socket.onclose = null;
+        socket.close();
+      }
       socketRef.current = null;
       video.srcObject = null;
       videoRef.current = null;

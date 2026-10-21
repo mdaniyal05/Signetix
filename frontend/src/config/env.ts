@@ -21,12 +21,12 @@ export const PSL_WS_URL: string =
 
 /** Frames per second sampled from the webcam and sent to the recognizer. */
 export const RECOGNITION_FPS: number = Number(
-  import.meta.env.VITE_RECOGNITION_FPS ?? 15,
+  import.meta.env.VITE_RECOGNITION_FPS ?? 10,
 );
 
 /** Max width (px) frames are downscaled to before sending (saves bandwidth). */
 export const RECOGNITION_FRAME_WIDTH: number = Number(
-  import.meta.env.VITE_RECOGNITION_FRAME_WIDTH ?? 480,
+  import.meta.env.VITE_RECOGNITION_FRAME_WIDTH ?? 360,
 );
 
 /** True when a VideoSDK token is configured. */
