@@ -15,8 +15,8 @@ from src.feature_builder import build_frame_feature  # noqa: E402
 from src.landmark_extractor import HandLandmarkExtractor  # noqa: E402
 from src.segmentation import segment_frames  # noqa: E402
 
-CACHE_FILE = config.CACHE_DIR / "dataset.npz"
-METADATA_FILE = config.CACHE_DIR / "metadata.json"
+CACHE_FILE = config.CACHE_DIR / f"dataset{config.MODEL_VARIANT}.npz"
+METADATA_FILE = config.CACHE_DIR / f"metadata{config.MODEL_VARIANT}.json"
 
 
 def parse_signer(file_name: str) -> str:

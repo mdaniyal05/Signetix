@@ -11,9 +11,14 @@ CACHE_DIR: Path = PROJECT_DIR / "features_cache"
 MODELS_DIR: Path = PROJECT_DIR / "models"
 HAND_LANDMARKER_TASK: Path = PROJECT_DIR / "hand_landmarker.task"
 
-MODEL_FILE: Path = MODELS_DIR / "psl_model.keras"
-LABELS_FILE: Path = MODELS_DIR / "labels.json"
-NORMALIZATION_FILE: Path = MODELS_DIR / "normalization.json"
+# Model variant suffix: "" = original model (kept as a backup). A non-empty suffix
+# like "_v2" trains and runs a separate model, leaving the original files intact.
+# Flip back to "" to restore the previous model everywhere (training + inference).
+MODEL_VARIANT: str = "_v2"
+
+MODEL_FILE: Path = MODELS_DIR / f"psl_model{MODEL_VARIANT}.keras"
+LABELS_FILE: Path = MODELS_DIR / f"labels{MODEL_VARIANT}.json"
+NORMALIZATION_FILE: Path = MODELS_DIR / f"normalization{MODEL_VARIANT}.json"
 
 # Vocabulary (must match the dataset sub-folder names, which are the clean labels).
 WORDS: list[str] = [
@@ -31,7 +36,8 @@ WORDS: list[str] = [
 
 SIGNER_ALIASES: dict[str, tuple[str, ...]] = {
     "malaika": ("malaika",),
-    "musfira": ("musfira",),
+    "musfira": ("musfira", "musfir"),
+    "rhn": ("rhn",),
 }
 
 UNKNOWN_SIGNER: str = "unknown"

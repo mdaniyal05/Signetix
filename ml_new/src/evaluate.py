@@ -44,7 +44,7 @@ def _plot_confusion(matrix: np.ndarray, words: list[str]) -> None:
                       color="white" if normalized[i, j] > 0.5 else "black")
     fig.colorbar(image, ax=axis, fraction=0.046, pad=0.04)
     fig.tight_layout()
-    out_path = config.MODELS_DIR / "confusion_matrix.png"
+    out_path = config.MODELS_DIR / f"confusion_matrix{config.MODEL_VARIANT}.png"
     fig.savefig(out_path, dpi=100)
     print(f"\nSaved confusion matrix -> {out_path}")
 

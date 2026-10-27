@@ -17,7 +17,7 @@ from src.augmentation import augment_sequence  # noqa: E402
 from src.dataset_builder import load_dataset  # noqa: E402
 from src.model import build_model  # noqa: E402
 
-SPLIT_FILE = config.MODELS_DIR / "split.json"
+SPLIT_FILE = config.MODELS_DIR / f"split{config.MODEL_VARIANT}.json"
 
 
 def make_grouped_split(
