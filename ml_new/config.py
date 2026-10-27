@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 
 # Paths
@@ -14,7 +15,7 @@ HAND_LANDMARKER_TASK: Path = PROJECT_DIR / "hand_landmarker.task"
 # Model variant suffix: "" = original model (kept as a backup). A non-empty suffix
 # like "_v2" trains and runs a separate model, leaving the original files intact.
 # Flip back to "" to restore the previous model everywhere (training + inference).
-MODEL_VARIANT: str = "_v2"
+MODEL_VARIANT: str = os.environ.get("PSL_MODEL_VARIANT", "_v3")
 
 MODEL_FILE: Path = MODELS_DIR / f"psl_model{MODEL_VARIANT}.keras"
 LABELS_FILE: Path = MODELS_DIR / f"labels{MODEL_VARIANT}.json"
@@ -77,12 +78,15 @@ BATCH_SIZE: int = 32
 MAX_EPOCHS: int = 150
 LEARNING_RATE: float = 1e-3
 EARLY_STOPPING_PATIENCE: int = 20
+# Inverse-frequency class weighting. Off by default: it over-predicted the minority
+# class (how_can_i_help_you) live; disabling it raised held-out 94.7%->98.0% (v3).
+USE_CLASS_WEIGHTS: bool = os.environ.get("PSL_USE_CLASS_WEIGHTS", "0") != "0"
 
 # Acceptance criterion for the phase.
 MIN_PER_WORD_ACCURACY: float = 0.60
 
 # Real-time inference (segment-on-rest, mirrors training).
-INFERENCE_CONFIDENCE_THRESHOLD: float = 0.60
+INFERENCE_CONFIDENCE_THRESHOLD: float = 0.80
 # Rest gap before a sign finalizes: lower = faster caption after you stop signing,
 # but too low can split one sign into two on brief hand-tracking dropouts.
 INFERENCE_REST_MIN_DURATION_SEC: float = 0.5

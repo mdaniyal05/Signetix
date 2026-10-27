@@ -146,11 +146,14 @@ def train(architecture: str = "lstm") -> None:
         ),
     ]
 
+    class_weight = (
+        _class_weights(y_train, num_classes) if config.USE_CLASS_WEIGHTS else None
+    )
     model.fit(
         train_dataset,
         validation_data=val_dataset,
         epochs=config.MAX_EPOCHS,
-        class_weight=_class_weights(y_train, num_classes),
+        class_weight=class_weight,
         callbacks=callbacks,
         verbose=2,
     )
