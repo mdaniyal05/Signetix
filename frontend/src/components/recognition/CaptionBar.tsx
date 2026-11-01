@@ -7,6 +7,7 @@ interface CaptionBarProps {
   latest: TranscriptEntry | null;
   isSigning: boolean;
   language?: PslLanguage;
+  speaker?: string | null;
   className?: string;
 }
 
@@ -15,6 +16,7 @@ export function CaptionBar({
   latest,
   isSigning,
   language = "English",
+  speaker,
   className,
 }: CaptionBarProps) {
   return (
@@ -26,6 +28,9 @@ export function CaptionBar({
     >
       {latest ? (
         <div className="pointer-events-auto flex items-center gap-3 rounded-full bg-black/70 px-6 py-3 text-white backdrop-blur-sm">
+          {speaker ? (
+            <span className="text-sm font-medium text-white/60">{speaker}</span>
+          ) : null}
           <span className="text-xl font-semibold capitalize">
             {signLabel(latest.word, language)}
           </span>

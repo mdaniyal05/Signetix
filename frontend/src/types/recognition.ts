@@ -25,6 +25,17 @@ export interface TranscriptEntry {
   at: number;
 }
 
+/** A transcript entry with an optional speaker label (multi-party calls). */
+export interface DisplayEntry extends TranscriptEntry {
+  speaker?: string;
+}
+
+/** A remote participant's recognized sign, tagged with who signed it. */
+export interface RemoteCaptionEntry extends TranscriptEntry {
+  speakerId: string;
+  speakerName: string;
+}
+
 /** Connection lifecycle of the recognition WebSocket. */
 export type ConnectionStatus =
   | "idle"

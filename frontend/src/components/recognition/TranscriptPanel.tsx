@@ -6,10 +6,10 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { signLabel } from "@/lib/psl-translations";
 import type { PslLanguage } from "@/types/api";
-import type { TranscriptEntry } from "@/types/recognition";
+import type { DisplayEntry } from "@/types/recognition";
 
 interface TranscriptPanelProps {
-  transcript: TranscriptEntry[];
+  transcript: DisplayEntry[];
   sentence: string;
   language?: PslLanguage;
   onClear: () => void;
@@ -54,12 +54,19 @@ export function TranscriptPanel({
               .map((entry) => (
                 <li
                   key={entry.id}
-                  className="flex items-center justify-between rounded-md px-2 py-1.5 text-sm hover:bg-accent"
+                  className="flex items-center justify-between gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-accent"
                 >
-                  <span className="font-medium capitalize">
-                    {signLabel(entry.word, language)}
+                  <span className="flex min-w-0 items-center gap-2">
+                    {entry.speaker ? (
+                      <span className="shrink-0 text-xs text-muted-foreground">
+                        {entry.speaker}
+                      </span>
+                    ) : null}
+                    <span className="truncate font-medium capitalize">
+                      {signLabel(entry.word, language)}
+                    </span>
                   </span>
-                  <span className="text-xs text-muted-foreground">
+                  <span className="shrink-0 text-xs text-muted-foreground">
                     {Math.round(entry.confidence * 100)}%
                   </span>
                 </li>

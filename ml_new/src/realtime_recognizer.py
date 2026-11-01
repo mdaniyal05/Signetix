@@ -65,6 +65,9 @@ class StreamingSignRecognizer:
         self._prev_hand_feature: np.ndarray | None = None
         self._has_moved: bool = False
         self._settle_started_at: float | None = None
+        # Across-sign dedupe (not cleared by _reset): the last word emitted and when.
+        self._last_emitted_word: str | None = None
+        self._last_emitted_ts: float = float("-inf")
 
     def __enter__(self) -> "StreamingSignRecognizer":
         return self
@@ -204,8 +207,19 @@ class StreamingSignRecognizer:
         if confidence < self.confidence_threshold:
             return None
 
+        word = self.labels[best_index]
+        finalized_at = timestamps[-1]
+        # Drop a back-to-back repeat of the same word (a split compound sign) so it
+        # captions once rather than spamming.
+        if (word == self._last_emitted_word
+                and finalized_at - self._last_emitted_ts < config.INFERENCE_DUP_SUPPRESS_SEC):
+            self._last_emitted_ts = finalized_at
+            return None
+        self._last_emitted_word = word
+        self._last_emitted_ts = finalized_at
+
         return Prediction(
-            word=self.labels[best_index],
+            word=word,
             confidence=confidence,
             duration=duration,
             num_frames=num_frames,

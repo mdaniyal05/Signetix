@@ -102,5 +102,9 @@ INFERENCE_SETTLE_ENABLE: bool = True
 INFERENCE_MOVING_THRESHOLD: float = 0.025
 INFERENCE_SETTLE_THRESHOLD: float = 0.012
 # How long the hands must stay still (after having moved) before finalizing. Must exceed a
-# within-sign pause between movements, or a multi-movement sign gets split.
-INFERENCE_SETTLE_DURATION_SEC: float = 0.8
+# within-sign pause between movements, or a multi-movement sign gets split (and the partial
+# spans misclassify, usually as the weakest class "yes").
+INFERENCE_SETTLE_DURATION_SEC: float = 1.1
+# Collapse a repeat of the same word finalized within this window, so a compound sign that
+# still splits into back-to-back finalizes is captioned once instead of spamming the word.
+INFERENCE_DUP_SUPPRESS_SEC: float = 1.5

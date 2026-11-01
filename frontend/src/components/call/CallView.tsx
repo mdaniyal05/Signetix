@@ -14,6 +14,9 @@ import { TranscriptPanel } from "@/components/recognition/TranscriptPanel";
 import { useLocalWebcamStream } from "@/hooks/useLocalWebcamStream";
 import { usePslRecognition } from "@/hooks/usePslRecognition";
 import { useSignSpeech, speechSupported } from "@/hooks/useSignSpeech";
+import { useSharedCaptions } from "@/hooks/useSharedCaptions";
+import { transcriptToSentence } from "@/lib/recognition-state";
+import type { DisplayEntry } from "@/types/recognition";
 import { CallControls } from "./CallControls";
 import { ParticipantGrid } from "./ParticipantGrid";
 
@@ -145,8 +148,39 @@ export function CallView({ meetingId, onLeave }: CallViewProps) {
     enabled: recognitionOn && localWebcamOn,
   });
 
-  // Speak each newly recognized sign out loud (when enabled), in the chosen language.
-  useSignSpeech(recognition.latest, speechOn && recognitionOn, language);
+  // Broadcast my signs to the meeting and receive the others', so each side sees
+  // what the other is signing (recognition itself only reads the local camera).
+  const shared = useSharedCaptions(recognition.latest, localParticipant?.id);
+
+  // Merge my transcript ("You") with the remote participants', oldest first.
+  const transcript = useMemo<DisplayEntry[]>(() => {
+    const mine: DisplayEntry[] = recognition.transcript.map((entry) => ({
+      ...entry,
+      speaker: "You",
+    }));
+    const theirs: DisplayEntry[] = shared.remoteTranscript.map((entry) => ({
+      ...entry,
+      speaker: entry.speakerName,
+    }));
+    return [...mine, ...theirs].sort((a, b) => a.at - b.at).slice(-100);
+  }, [recognition.transcript, shared.remoteTranscript]);
+  const sentence = useMemo(() => transcriptToSentence(transcript), [transcript]);
+
+  // Caption bar shows the most recent sign from anyone, tagged with who signed it.
+  const caption = useMemo(() => {
+    const mine = recognition.latest
+      ? { entry: recognition.latest, speaker: "You" }
+      : null;
+    const theirs = shared.remoteLatest
+      ? { entry: shared.remoteLatest, speaker: shared.remoteLatest.speakerName }
+      : null;
+    if (mine && theirs) return mine.entry.at >= theirs.entry.at ? mine : theirs;
+    return mine ?? theirs;
+  }, [recognition.latest, shared.remoteLatest]);
+
+  // Speak only the OTHER person's signs (you read your own on-screen; avoids the mic
+  // echoing your device's own speech back into the call).
+  useSignSpeech(shared.remoteLatest, speechOn && recognitionOn, language);
 
   if (joinError) {
     return (
@@ -190,10 +224,13 @@ export function CallView({ meetingId, onLeave }: CallViewProps) {
         <div className="relative h-[50vh] min-h-0 lg:h-auto">
           <div className="inset-0 h-full lg:absolute">
             <TranscriptPanel
-              transcript={recognition.transcript}
-              sentence={recognition.sentence}
+              transcript={transcript}
+              sentence={sentence}
               language={language}
-              onClear={recognition.clearTranscript}
+              onClear={() => {
+                recognition.clearTranscript();
+                shared.clearRemote();
+              }}
             />
           </div>
         </div>
@@ -201,7 +238,8 @@ export function CallView({ meetingId, onLeave }: CallViewProps) {
 
       {recognitionOn && (
         <CaptionBar
-          latest={recognition.latest}
+          latest={caption?.entry ?? null}
+          speaker={caption?.speaker}
           isSigning={recognition.isSigning}
           language={language}
         />
