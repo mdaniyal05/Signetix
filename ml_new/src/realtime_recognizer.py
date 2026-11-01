@@ -183,7 +183,7 @@ class StreamingSignRecognizer:
 
         if (
             num_frames < config.INFERENCE_MIN_SIGN_FRAMES
-            or duration < config.MIN_SIGN_DURATION_SEC
+            or duration < config.INFERENCE_MIN_SIGN_DURATION_SEC
             or hands_fraction < config.MIN_HANDS_FRACTION
         ):
             return None
@@ -191,7 +191,19 @@ class StreamingSignRecognizer:
         sequence = resample_sequence(np.stack(features), config.SEQUENCE_LENGTH)
         probabilities = self.model.predict(sequence[None, ...], verbose=0)[0]
         best_index = int(np.argmax(probabilities))
+
+        if config.INFERENCE_DEBUG_LOG:
+            self._log_prediction(probabilities, duration, num_frames)
+
         return best_index, float(probabilities[best_index]), duration, num_frames
+
+    def _log_prediction(
+        self, probabilities: np.ndarray, duration: float, num_frames: int
+    ) -> None:
+        """Print top-3 softmax + span stats, to tune thresholds from real live data."""
+        order = np.argsort(probabilities)[::-1][:3]
+        top3 = ", ".join(f"{self.labels[i]} {probabilities[i]:.2f}" for i in order)
+        print(f"[psl] top3: {top3} | dur {duration:.2f}s frames {num_frames}")
 
     def _finalize(self) -> Prediction | None:
         features = self._features

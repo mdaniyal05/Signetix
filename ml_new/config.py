@@ -90,8 +90,15 @@ INFERENCE_CONFIDENCE_THRESHOLD: float = 0.80
 # Rest gap before a sign finalizes: lower = faster caption after you stop signing,
 # but too low can split one sign into two on brief hand-tracking dropouts.
 INFERENCE_REST_MIN_DURATION_SEC: float = 0.5
-# Floor on hand frames per sign; kept low to suit the ~10fps capture rate.
-INFERENCE_MIN_SIGN_FRAMES: int = 4
+# Floor on hand frames per sign; raised from 4 so a brief hand-lift/adjust isn't classified
+# as a sign (a real sign spans more frames even at ~10fps).
+INFERENCE_MIN_SIGN_FRAMES: int = 6
+# Inference-only minimum span duration (separate from training's MIN_SIGN_DURATION_SEC):
+# rejects brief hand movements that aren't real signs. Raise if noise still classifies.
+INFERENCE_MIN_SIGN_DURATION_SEC: float = 0.6
+# Log top-3 softmax + span stats per finalized span to the server console, to tune the
+# thresholds from real live data. Enable with PSL_INFERENCE_DEBUG=1.
+INFERENCE_DEBUG_LOG: bool = os.environ.get("PSL_INFERENCE_DEBUG", "0") != "0"
 # Finalize on motion-settle: once the hands have moved and then go still for
 # SETTLE_DURATION, the sign is treated as finished and the FULL span is classified at once
 # (so multi-movement signs run to completion, not cut short on a prefix). This fires sooner
