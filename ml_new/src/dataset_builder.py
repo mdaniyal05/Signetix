@@ -45,12 +45,19 @@ def resample_sequence(features: np.ndarray, target_length: int) -> np.ndarray:
 
 def _iter_videos() -> list[tuple[str, Path]]:
     videos: list[tuple[str, Path]] = []
+    excluded = 0
     for word in config.WORDS:
         word_dir = config.DATASET_DIR / word
         if not word_dir.is_dir():
             print(f"WARNING: missing word folder: {word_dir}")
             continue
-        videos.extend((word, path) for path in sorted(word_dir.glob("*.mp4")))
+        for path in sorted(word_dir.glob("*.mp4")):
+            if parse_signer(path.name) in config.EXCLUDE_SIGNERS:
+                excluded += 1
+                continue
+            videos.append((word, path))
+    if excluded:
+        print(f"Excluded {excluded} clips from signers {config.EXCLUDE_SIGNERS}")
     return videos
 
 

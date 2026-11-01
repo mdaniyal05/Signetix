@@ -18,6 +18,7 @@ from src.dataset_builder import load_dataset  # noqa: E402
 from src.model import build_model  # noqa: E402
 
 SPLIT_FILE = config.MODELS_DIR / f"split{config.MODEL_VARIANT}.json"
+TRAIN_LOG_FILE = config.LOGS_DIR / f"training{config.MODEL_VARIANT}.csv"
 
 
 def make_grouped_split(
@@ -131,8 +132,10 @@ def train(architecture: str = "lstm") -> None:
     model.summary()
 
     config.MODELS_DIR.mkdir(parents=True, exist_ok=True)
+    config.LOGS_DIR.mkdir(parents=True, exist_ok=True)
 
     callbacks = [
+        tf.keras.callbacks.CSVLogger(str(TRAIN_LOG_FILE)),
         tf.keras.callbacks.ModelCheckpoint(
             str(config.MODEL_FILE), monitor="val_accuracy",
             save_best_only=True, mode="max", verbose=1,

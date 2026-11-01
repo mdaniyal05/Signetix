@@ -4,6 +4,8 @@
 # Data files
 dataset
 
+logs
+
 # Cached preprocessed features (regenerate via dataset_builder.py)
 features_cache/
 

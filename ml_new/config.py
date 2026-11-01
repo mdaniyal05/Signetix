@@ -10,18 +10,20 @@ PROJECT_DIR: Path = Path(__file__).resolve().parent
 DATASET_DIR: Path = PROJECT_DIR / "dataset"
 CACHE_DIR: Path = PROJECT_DIR / "features_cache"
 MODELS_DIR: Path = PROJECT_DIR / "models"
+LOGS_DIR: Path = PROJECT_DIR / "logs"
 HAND_LANDMARKER_TASK: Path = PROJECT_DIR / "hand_landmarker.task"
 
-# Model variant suffix: "" = original model (kept as a backup). A non-empty suffix
-# like "_v2" trains and runs a separate model, leaving the original files intact.
-# Flip back to "" to restore the previous model everywhere (training + inference).
-MODEL_VARIANT: str = os.environ.get("PSL_MODEL_VARIANT", "")
+# Model variant suffix. "_v2" = current 20-word model (default). "" = the original
+# 10-word v1 model, kept as a rollback: set PSL_MODEL_VARIANT="" to restore it
+# everywhere (training + inference).
+MODEL_VARIANT: str = os.environ.get("PSL_MODEL_VARIANT", "_v2")
 
 MODEL_FILE: Path = MODELS_DIR / f"psl_model{MODEL_VARIANT}.keras"
 LABELS_FILE: Path = MODELS_DIR / f"labels{MODEL_VARIANT}.json"
 NORMALIZATION_FILE: Path = MODELS_DIR / f"normalization{MODEL_VARIANT}.json"
 
 # Vocabulary (must match the dataset sub-folder names, which are the clean labels).
+# First 10 = the v1 vocabulary; next 10 added for v2 (20 total).
 WORDS: list[str] = [
     "congratulations",
     "excuse_me",
@@ -33,6 +35,16 @@ WORDS: list[str] = [
     "yes",
     "thank_you",
     "welcome",
+    "doesnt_matter",
+    "dont_touch",
+    "have_a_nice_day",
+    "have_you_eaten",
+    "how_do_you_feel",
+    "how_long",
+    "i_am_learning_sign_language",
+    "lets_go_to_a_restaurant",
+    "see_you_later",
+    "what",
 ]
 
 SIGNER_ALIASES: dict[str, tuple[str, ...]] = {
@@ -40,6 +52,9 @@ SIGNER_ALIASES: dict[str, tuple[str, ...]] = {
     "musfira": ("musfira", "musfir"),
     "rhn": ("rhn",),
 }
+
+# Signers to drop at dataset-build time (rhn clips have quality issues).
+EXCLUDE_SIGNERS: tuple[str, ...] = ("rhn",)
 
 UNKNOWN_SIGNER: str = "unknown"
 

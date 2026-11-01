@@ -55,37 +55,66 @@ def evaluate() -> None:
 
     test_mask = _mask_for_clips(groups, _load_test_split())
     x_test, y_test = features[test_mask], labels[test_mask]
-    print(f"Evaluating on {len(x_test)} held-out test samples.")
 
     model = tf.keras.models.load_model(config.MODEL_FILE)
     probabilities = model.predict(x_test, verbose=0)
     predictions = probabilities.argmax(axis=1)
+    confidences = probabilities.max(axis=1)
 
+    lines: list[str] = []
     overall = float((predictions == y_test).mean())
-    print(f"\nOverall test accuracy: {overall:.3f}\n")
+    lines.append(f"PSL model{config.MODEL_VARIANT} evaluation  ({len(config.WORDS)} words)")
+    lines.append(f"Held-out test samples: {len(x_test)}")
+    lines.append(f"Overall test accuracy: {overall:.3f}\n")
 
-    print(f"{'word':<20} {'n':>4} {'accuracy':>9}   result")
-    print("-" * 48)
+    lines.append(f"{'word':<28} {'n':>3} {'acc':>7} {'mean_conf':>10}   top confusion")
+    lines.append("-" * 78)
+    issues: list[str] = []
     all_pass = True
     for index, word in enumerate(config.WORDS):
         mask = y_test == index
         count = int(mask.sum())
         if count == 0:
-            print(f"{word:<20} {0:>4} {'n/a':>9}   (no test samples)")
+            lines.append(f"{word:<28} {0:>3} {'n/a':>7} {'n/a':>10}   (no test samples)")
+            issues.append(f"{word}: no held-out test samples (can't verify)")
             continue
         accuracy = float((predictions[mask] == index).mean())
+        mean_conf = float(confidences[mask].mean())
+        wrong = predictions[mask][predictions[mask] != index]
+        confusion = ""
+        if wrong.size:
+            target, hits = np.unique(wrong, return_counts=True)
+            worst = int(target[hits.argmax()])
+            confusion = f"{config.WORDS[worst]} (x{int(hits.max())})"
         passed = accuracy >= config.MIN_PER_WORD_ACCURACY
         all_pass = all_pass and passed
-        print(
-            f"{word:<20} {count:>4} {accuracy:>9.1%}   {'PASS' if passed else 'FAIL'}")
+        flag = "" if passed else "  <-- FAIL"
+        lines.append(
+            f"{word:<28} {count:>3} {accuracy:>7.1%} {mean_conf:>10.2f}   {confusion}{flag}")
+        if not passed:
+            issues.append(f"{word}: accuracy {accuracy:.0%} below "
+                          f"{config.MIN_PER_WORD_ACCURACY:.0%}; confused with {confusion or 'n/a'}")
+        elif mean_conf < 0.80:
+            issues.append(f"{word}: passes but low mean confidence {mean_conf:.2f} "
+                          f"(may be dropped live by the 0.80 threshold)")
 
-    print("-" * 48)
-    print(f"Target: every word >= {config.MIN_PER_WORD_ACCURACY:.0%}  ->  "
-          f"{'ALL PASS' if all_pass else 'SOME FAILED'}")
+    lines.append("-" * 78)
+    lines.append(f"Target: every word >= {config.MIN_PER_WORD_ACCURACY:.0%}  ->  "
+                 f"{'ALL PASS' if all_pass else 'SOME FAILED'}\n")
 
-    print("\nClassification report:")
-    print(classification_report(y_test, predictions,
-          target_names=config.WORDS, zero_division=0))
+    lines.append("Issues:")
+    lines.extend(f"  - {item}" for item in issues) if issues else lines.append("  none")
+
+    lines.append("\nClassification report:")
+    lines.append(classification_report(y_test, predictions,
+                 target_names=config.WORDS, zero_division=0))
+
+    report = "\n".join(lines)
+    print(report)
+    config.LOGS_DIR.mkdir(parents=True, exist_ok=True)
+    report_file = config.LOGS_DIR / f"report{config.MODEL_VARIANT}.txt"
+    report_file.write_text(report, encoding="utf-8")
+    print(f"Saved report -> {report_file}")
 
     matrix = confusion_matrix(
         y_test, predictions, labels=range(len(config.WORDS)))
