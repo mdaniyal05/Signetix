@@ -90,12 +90,11 @@ INFERENCE_CONFIDENCE_THRESHOLD: float = 0.80
 # Rest gap before a sign finalizes: lower = faster caption after you stop signing,
 # but too low can split one sign into two on brief hand-tracking dropouts.
 INFERENCE_REST_MIN_DURATION_SEC: float = 0.5
-# Floor on hand frames per sign; raised from 4 so a brief hand-lift/adjust isn't classified
-# as a sign (a real sign spans more frames even at ~10fps).
-INFERENCE_MIN_SIGN_FRAMES: int = 6
-# Inference-only minimum span duration (separate from training's MIN_SIGN_DURATION_SEC):
-# rejects brief hand movements that aren't real signs. Raise if noise still classifies.
-INFERENCE_MIN_SIGN_DURATION_SEC: float = 0.6
+# Floor on hand frames per sign; kept low because the effective live FPS over the tunnel can
+# fall well below the capture rate (esp. multi-party), and too high a floor drops real signs.
+INFERENCE_MIN_SIGN_FRAMES: int = 4
+# Inference-only minimum span duration (separate from training's MIN_SIGN_DURATION_SEC).
+INFERENCE_MIN_SIGN_DURATION_SEC: float = 0.4
 # Log top-3 softmax + span stats per finalized span to the server console, to tune the
 # thresholds from real live data. Enable with PSL_INFERENCE_DEBUG=1.
 INFERENCE_DEBUG_LOG: bool = os.environ.get("PSL_INFERENCE_DEBUG", "0") != "0"
@@ -108,10 +107,9 @@ INFERENCE_SETTLE_ENABLE: bool = True
 # Per-frame wrist displacement (fraction of frame): above = moving, below = still.
 INFERENCE_MOVING_THRESHOLD: float = 0.025
 INFERENCE_SETTLE_THRESHOLD: float = 0.012
-# How long the hands must stay still (after having moved) before finalizing. Must exceed a
-# within-sign pause between movements, or a multi-movement sign gets split (and the partial
-# spans misclassify, usually as the weakest class "yes").
-INFERENCE_SETTLE_DURATION_SEC: float = 1.1
+# How long the hands must stay still (after having moved) before finalizing. Higher = more
+# delay before the caption; 1.1 felt unresponsive live, so kept at 0.8.
+INFERENCE_SETTLE_DURATION_SEC: float = 0.8
 # Collapse a repeat of the same word finalized within this window, so a compound sign that
 # still splits into back-to-back finalizes is captioned once instead of spamming the word.
 INFERENCE_DUP_SUPPRESS_SEC: float = 1.5
