@@ -15,7 +15,7 @@ HAND_LANDMARKER_TASK: Path = PROJECT_DIR / "hand_landmarker.task"
 # Model variant suffix: "" = original model (kept as a backup). A non-empty suffix
 # like "_v2" trains and runs a separate model, leaving the original files intact.
 # Flip back to "" to restore the previous model everywhere (training + inference).
-MODEL_VARIANT: str = os.environ.get("PSL_MODEL_VARIANT", "_v3")
+MODEL_VARIANT: str = os.environ.get("PSL_MODEL_VARIANT", "")
 
 MODEL_FILE: Path = MODELS_DIR / f"psl_model{MODEL_VARIANT}.keras"
 LABELS_FILE: Path = MODELS_DIR / f"labels{MODEL_VARIANT}.json"
@@ -92,3 +92,15 @@ INFERENCE_CONFIDENCE_THRESHOLD: float = 0.80
 INFERENCE_REST_MIN_DURATION_SEC: float = 0.5
 # Floor on hand frames per sign; kept low to suit the ~10fps capture rate.
 INFERENCE_MIN_SIGN_FRAMES: int = 4
+# Finalize on motion-settle: once the hands have moved and then go still for
+# SETTLE_DURATION, the sign is treated as finished and the FULL span is classified at once
+# (so multi-movement signs run to completion, not cut short on a prefix). This fires sooner
+# than the hand-absence rest gap without requiring the hand to leave the frame. Falls back
+# to the rest gap when the hand just disappears. Disable with the flag.
+INFERENCE_SETTLE_ENABLE: bool = True
+# Per-frame wrist displacement (fraction of frame): above = moving, below = still.
+INFERENCE_MOVING_THRESHOLD: float = 0.025
+INFERENCE_SETTLE_THRESHOLD: float = 0.012
+# How long the hands must stay still (after having moved) before finalizing. Must exceed a
+# within-sign pause between movements, or a multi-movement sign gets split.
+INFERENCE_SETTLE_DURATION_SEC: float = 0.8

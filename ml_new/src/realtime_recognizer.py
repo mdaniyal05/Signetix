@@ -61,6 +61,10 @@ class StreamingSignRecognizer:
         self._timestamps: list[float] = []
         self._hand_flags: list[bool] = []
         self._rest_started_at: float | None = None
+        # Motion-settle state (finalize when the sign finishes moving, not on a prefix).
+        self._prev_hand_feature: np.ndarray | None = None
+        self._has_moved: bool = False
+        self._settle_started_at: float | None = None
 
     def __enter__(self) -> "StreamingSignRecognizer":
         return self
@@ -86,11 +90,27 @@ class StreamingSignRecognizer:
         feature = build_frame_feature(detection.hands)
 
         if detection.has_hand:
+            movement = self._movement(feature, self._prev_hand_feature)
             self._append(feature, timestamp_sec, has_hand=True)
             self._rest_started_at = None
+            self._prev_hand_feature = feature
+
             # Cut a no-rest (continuous) span at max length.
             if self._span_duration() >= config.MAX_SIGN_DURATION_SEC:
                 return self._finalize()
+
+            # Finalize once the sign has moved and then settled (gone still).
+            if config.INFERENCE_SETTLE_ENABLE:
+                if movement >= config.INFERENCE_MOVING_THRESHOLD:
+                    self._has_moved = True
+                    self._settle_started_at = None
+                elif movement < config.INFERENCE_SETTLE_THRESHOLD and self._has_moved:
+                    if self._span_duration() >= config.MIN_SIGN_DURATION_SEC:
+                        if self._settle_started_at is None:
+                            self._settle_started_at = timestamp_sec
+                        elif (timestamp_sec - self._settle_started_at
+                              >= config.INFERENCE_SETTLE_DURATION_SEC):
+                            return self._finalize()
             return None
 
         if not self.is_signing:
@@ -122,22 +142,38 @@ class StreamingSignRecognizer:
         self._timestamps = []
         self._hand_flags = []
         self._rest_started_at = None
+        self._prev_hand_feature = None
+        self._has_moved = False
+        self._settle_started_at = None
 
-    def _finalize(self) -> Prediction | None:
-        features = self._features
-        timestamps = self._timestamps
-        hand_flags = self._hand_flags
-        self._reset()
+    @staticmethod
+    def _movement(feature: np.ndarray, prev_feature: np.ndarray | None) -> float:
+        """Mean wrist (x,y) displacement vs the previous hand frame, over hands in both."""
+        if prev_feature is None:
+            return 1.0  # no reference yet: treat as moving
 
-        # Trim trailing rest frames so the span ends on the last hand frame (like training).
+        per_hand = config.PER_HAND_FEATURE_DIM
+        presence_offset = per_hand * config.MAX_NUM_HANDS
+        displacements: list[float] = []
+        for slot in range(config.MAX_NUM_HANDS):
+            if feature[presence_offset + slot] > 0.5 and prev_feature[presence_offset + slot] > 0.5:
+                base = slot * per_hand
+                displacements.append(
+                    float(np.linalg.norm(feature[base:base + 2] - prev_feature[base:base + 2])))
+        if not displacements:
+            return 1.0  # hand set changed: treat as moving
+        return sum(displacements) / len(displacements)
+
+    def _classify(
+        self, features: list[np.ndarray], timestamps: list[float], hand_flags: list[bool]
+    ) -> tuple[int, float, float, int] | None:
+        """Quality-gate + classify a span. Returns (index, confidence, duration, frames)."""
         last_hand = _last_true_index(hand_flags)
-
         if last_hand is None:
             return None
 
         features = features[:last_hand + 1]
         hand_flags = hand_flags[:last_hand + 1]
-
         duration = timestamps[last_hand] - timestamps[0]
         num_frames = sum(hand_flags)
         hands_fraction = num_frames / max(len(hand_flags), 1)
@@ -149,12 +185,21 @@ class StreamingSignRecognizer:
         ):
             return None
 
-        sequence = resample_sequence(
-            np.stack(features), config.SEQUENCE_LENGTH)
-
+        sequence = resample_sequence(np.stack(features), config.SEQUENCE_LENGTH)
         probabilities = self.model.predict(sequence[None, ...], verbose=0)[0]
         best_index = int(np.argmax(probabilities))
-        confidence = float(probabilities[best_index])
+        return best_index, float(probabilities[best_index]), duration, num_frames
+
+    def _finalize(self) -> Prediction | None:
+        features = self._features
+        timestamps = self._timestamps
+        hand_flags = self._hand_flags
+        self._reset()
+
+        result = self._classify(features, timestamps, hand_flags)
+        if result is None:
+            return None
+        best_index, confidence, duration, num_frames = result
 
         if confidence < self.confidence_threshold:
             return None

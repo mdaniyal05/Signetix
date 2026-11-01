@@ -74,11 +74,14 @@ export function CallView({ meetingId, onLeave }: CallViewProps) {
   });
 
   const joinedRef = useRef(false);
+  // When join() last actually fired, to debounce rapid re-calls.
+  const lastJoinAtRef = useRef(0);
 
-  // Join, retrying until actually connected. A single join() can fire before the
-  // SDK socket is ready and silently no-op — fatal in a production build where
-  // StrictMode doesn't double-invoke the effect. Retrying bridges that; join() is
-  // idempotent once connecting/joined, so extra calls are harmless.
+  // Join, retrying only if join() silently no-ops before the SDK socket is ready. Each
+  // join() gets a fresh server-assigned id, so firing it twice while an attempt is still
+  // connecting spawns a GHOST of you in the grid. safeJoin() debounces calls (2.5s): it
+  // absorbs StrictMode's double-invoke and lets a normal connect (1-3s) finish before any
+  // retry fires, while still recovering a genuine no-op. Stops once connected.
   useEffect(() => {
     const secondsLeft = tokenSecondsLeft(VIDEOSDK_TOKEN);
     if (secondsLeft !== null && secondsLeft <= 0) {
@@ -88,13 +91,20 @@ export function CallView({ meetingId, onLeave }: CallViewProps) {
       return;
     }
 
-    join();
+    const safeJoin = () => {
+      if (joinedRef.current) return;
+      if (Date.now() - lastJoinAtRef.current < 2500) return;
+      lastJoinAtRef.current = Date.now();
+      join();
+    };
+
+    safeJoin();
     const retry = window.setInterval(() => {
       if (joinedRef.current) {
         window.clearInterval(retry);
         return;
       }
-      join();
+      safeJoin();
     }, 2000);
 
     return () => window.clearInterval(retry);
