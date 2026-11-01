@@ -87,6 +87,9 @@ MIN_PER_WORD_ACCURACY: float = 0.60
 
 # Real-time inference (segment-on-rest, mirrors training).
 INFERENCE_CONFIDENCE_THRESHOLD: float = 0.80
+# Per-class floors layered on the global threshold. "yes" is the weakest class (fewest clips,
+# 2 signers) and the bucket partial/junk spans collapse into, so it needs a much higher bar.
+INFERENCE_CLASS_THRESHOLDS: dict[str, float] = {"yes": 0.95}
 # Rest gap before a sign finalizes: lower = faster caption after you stop signing,
 # but too low can split one sign into two on brief hand-tracking dropouts.
 INFERENCE_REST_MIN_DURATION_SEC: float = 0.5

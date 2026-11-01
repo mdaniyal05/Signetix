@@ -215,11 +215,16 @@ class StreamingSignRecognizer:
         if result is None:
             return None
         best_index, confidence, duration, num_frames = result
+        word = self.labels[best_index]
 
-        if confidence < self.confidence_threshold:
+        # Global floor, raised per-class for junk-prone classes (e.g. "yes").
+        floor = max(
+            self.confidence_threshold,
+            config.INFERENCE_CLASS_THRESHOLDS.get(word, 0.0),
+        )
+        if confidence < floor:
             return None
 
-        word = self.labels[best_index]
         finalized_at = timestamps[-1]
         # Drop a back-to-back repeat of the same word (a split compound sign) so it
         # captions once rather than spamming.
