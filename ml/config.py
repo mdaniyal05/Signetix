@@ -13,17 +13,14 @@ MODELS_DIR: Path = PROJECT_DIR / "models"
 LOGS_DIR: Path = PROJECT_DIR / "logs"
 HAND_LANDMARKER_TASK: Path = PROJECT_DIR / "hand_landmarker.task"
 
-# Model variant suffix. "_v2" = current 20-word model (default). "" = the original
-# 10-word v1 model, kept as a rollback: set PSL_MODEL_VARIANT="" to restore it
-# everywhere (training + inference).
+# "_v2" = 20-word model (default); "" = v1 10-word rollback.
 MODEL_VARIANT: str = os.environ.get("PSL_MODEL_VARIANT", "_v2")
 
 MODEL_FILE: Path = MODELS_DIR / f"psl_model{MODEL_VARIANT}.keras"
 LABELS_FILE: Path = MODELS_DIR / f"labels{MODEL_VARIANT}.json"
 NORMALIZATION_FILE: Path = MODELS_DIR / f"normalization{MODEL_VARIANT}.json"
 
-# Vocabulary (must match the dataset sub-folder names, which are the clean labels).
-# First 10 = the v1 vocabulary; next 10 added for v2 (20 total).
+# Vocabulary; must match the dataset sub-folder names. First 10 = v1, next 10 added for v2.
 WORDS: list[str] = [
     "congratulations",
     "excuse_me",
@@ -53,24 +50,24 @@ SIGNER_ALIASES: dict[str, tuple[str, ...]] = {
     "rhn": ("rhn",),
 }
 
-# Signers to drop at dataset-build time (rhn clips have quality issues).
+# Signers dropped at dataset-build time (quality issues).
 EXCLUDE_SIGNERS: tuple[str, ...] = ("rhn",)
 
 UNKNOWN_SIGNER: str = "unknown"
 
-# Hand landmark / feature geometry (Tasks API has no visibility channel, so x,y,z only).
+# Hand landmark / feature geometry (x,y,z only; Tasks API has no visibility channel).
 NUM_HAND_LANDMARKS: int = 21
 COORDS_PER_LANDMARK: int = 3
 NUM_JOINT_ANGLES: int = 15
 MAX_NUM_HANDS: int = 2
 
-# Per-hand = 63 coords + 15 angles = 78; frame = 78*2 + 2 presence flags = 158.
+# Per-hand 78; full frame 158 (78*2 + 2 presence flags).
 PER_HAND_FEATURE_DIM: int = NUM_HAND_LANDMARKS * \
     COORDS_PER_LANDMARK + NUM_JOINT_ANGLES
 FRAME_FEATURE_DIM: int = PER_HAND_FEATURE_DIM * MAX_NUM_HANDS + MAX_NUM_HANDS
 HAND_SLOTS: tuple[str, ...] = ("Left", "Right")
 
-# Sequence settings
+# Sequence
 SEQUENCE_LENGTH: int = 30
 SAMPLING_FPS: int = 15
 
@@ -79,7 +76,7 @@ MIN_HAND_DETECTION_CONFIDENCE: float = 0.5
 MIN_HAND_PRESENCE_CONFIDENCE: float = 0.5
 MIN_TRACKING_CONFIDENCE: float = 0.5
 
-# Clip segmentation (a "rest" frame = no hand; a long-enough rest run splits signs).
+# Clip segmentation (a long-enough no-hand run splits signs)
 REST_MIN_DURATION_SEC: float = 0.5
 MIN_SIGN_DURATION_SEC: float = 0.4
 MAX_SIGN_DURATION_SEC: float = 5.0
@@ -93,41 +90,19 @@ BATCH_SIZE: int = 32
 MAX_EPOCHS: int = 150
 LEARNING_RATE: float = 1e-3
 EARLY_STOPPING_PATIENCE: int = 20
-# Inverse-frequency class weighting. Off by default: it over-predicted the minority
-# class (how_can_i_help_you) live; disabling it raised held-out 94.7%->98.0% (v3).
 USE_CLASS_WEIGHTS: bool = os.environ.get("PSL_USE_CLASS_WEIGHTS", "0") != "0"
 
-# Acceptance criterion for the phase.
 MIN_PER_WORD_ACCURACY: float = 0.60
 
-# Real-time inference (segment-on-rest, mirrors training).
+# Real-time inference knobs.
 INFERENCE_CONFIDENCE_THRESHOLD: float = 0.80
-# Per-class floors layered on the global threshold. "yes" is the weakest class (fewest clips,
-# 2 signers) and the bucket partial/junk spans collapse into, so it needs a much higher bar.
 INFERENCE_CLASS_THRESHOLDS: dict[str, float] = {"yes": 0.95}
-# Rest gap before a sign finalizes: lower = faster caption after you stop signing,
-# but too low can split one sign into two on brief hand-tracking dropouts.
 INFERENCE_REST_MIN_DURATION_SEC: float = 0.5
-# Floor on hand frames per sign; kept low because the effective live FPS over the tunnel can
-# fall well below the capture rate (esp. multi-party), and too high a floor drops real signs.
 INFERENCE_MIN_SIGN_FRAMES: int = 4
-# Inference-only minimum span duration (separate from training's MIN_SIGN_DURATION_SEC).
 INFERENCE_MIN_SIGN_DURATION_SEC: float = 0.4
-# Log top-3 softmax + span stats per finalized span to the server console, to tune the
-# thresholds from real live data. Currently ON; set PSL_INFERENCE_DEBUG=0 to silence.
 INFERENCE_DEBUG_LOG: bool = os.environ.get("PSL_INFERENCE_DEBUG", "1") != "0"
-# Finalize on motion-settle: once the hands have moved and then go still for
-# SETTLE_DURATION, the sign is treated as finished and the FULL span is classified at once
-# (so multi-movement signs run to completion, not cut short on a prefix). This fires sooner
-# than the hand-absence rest gap without requiring the hand to leave the frame. Falls back
-# to the rest gap when the hand just disappears. Disable with the flag.
 INFERENCE_SETTLE_ENABLE: bool = True
-# Per-frame wrist displacement (fraction of frame): above = moving, below = still.
 INFERENCE_MOVING_THRESHOLD: float = 0.025
 INFERENCE_SETTLE_THRESHOLD: float = 0.012
-# Still-time before finalizing while the hand stays in frame (the main fragmenter: too low cuts
-# a multi-movement sign at an internal pause). Dropping the hand still finalizes fast via rest gap.
 INFERENCE_SETTLE_DURATION_SEC: float = 1.2
-# Collapse a repeat of the same word finalized within this window, so a compound sign that
-# still splits into back-to-back finalizes is captioned once instead of spamming the word.
 INFERENCE_DUP_SUPPRESS_SEC: float = 1.5

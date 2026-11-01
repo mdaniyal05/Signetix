@@ -1,10 +1,6 @@
 /** Helpers for grabbing downscaled JPEG frames from a <video> element. */
 
-/**
- * Draw the current video frame onto a canvas (downscaled to `maxWidth`) and
- * return it as a base64 JPEG string (no data-URL prefix), or null if the video
- * is not ready yet.
- */
+/** Draw the video frame to a canvas (downscaled) and return base64 JPEG, or null if not ready. */
 export function captureJpegBase64(
   video: HTMLVideoElement,
   canvas: HTMLCanvasElement,

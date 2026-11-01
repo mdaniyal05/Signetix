@@ -51,7 +51,7 @@ class HandLandmarkExtractor:
         if not self.model_asset_path.exists():
             raise FileNotFoundError(
                 f"HandLandmarker model not found at {self.model_asset_path}. "
-                "Download it during setup (see ml_new/README.md)."
+                "Download it during setup."
             )
 
         mode = {

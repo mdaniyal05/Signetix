@@ -21,11 +21,7 @@ const SocketContext = createContext<SocketContextValue>({
   connected: false,
 });
 
-/**
- * Maintains one Socket.io connection for the signed-in user and registers their
- * phone number (`socket-registration`) so the backend can route chat messages
- * and call signaling to them.
- */
+/** One Socket.io connection for the signed-in user; registers their phone for routing. */
 export function SocketProvider({ children }: { children: ReactNode }) {
   const { session } = useAuth();
   const phoneNumber = session?.phoneNumber;

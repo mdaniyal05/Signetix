@@ -1,7 +1,4 @@
-/**
- * Pure state logic for the recognition stream, kept separate from the React hook
- * so it can be unit-tested without a DOM or a live WebSocket.
- */
+/** Pure recognition-stream state logic (framework-free, unit-tested). */
 import type {
   ConnectionStatus,
   ServerMessage,

@@ -1,9 +1,4 @@
-/**
- * Centralized, typed access to build-time environment variables.
- *
- * Vite exposes only variables prefixed with `VITE_`. Copy `.env.example` to
- * `.env.local` and fill these in.
- */
+/** Typed access to VITE_ build-time env vars (copy .env.example to .env.local). */
 
 /** Base URL for the backend REST API. Defaults to the dev proxy ('/api'). */
 export const API_BASE_URL: string = import.meta.env.VITE_API_BASE_URL ?? "/api";

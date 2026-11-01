@@ -1,1 +1,43 @@
-ml_old
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+dist-ssr/
+*.tsbuildinfo
+*.local
+
+# Test coverage
+coverage/
+
+# Python (ml/)
+.venv/
+__pycache__/
+*.pyc
+ml/dataset/
+ml/features_cache/
+ml/hand_landmarker.task
+
+# Logs & runtime
+logs/
+*.log
+*.pid
+
+# Caches
+.eslintcache
+.vite/
+vite.config.*.timestamp-*
+
+# Env files
+.env
+.env.*
+!.env.example
+
+# Editor / OS
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+*.sw?
+
+docs/

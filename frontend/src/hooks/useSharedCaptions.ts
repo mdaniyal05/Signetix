@@ -6,12 +6,7 @@ import type { RemoteCaptionEntry, TranscriptEntry } from "@/types/recognition";
 const CAPTION_TOPIC = "PSL_CAPTION";
 const MAX_REMOTE_ENTRIES = 100;
 
-/**
- * Shares recognized signs across the meeting: publishes each of this participant's
- * finalized signs and collects the other participants', so every side sees what the
- * others are signing (recognition itself is local-only). Must run inside a VideoSDK
- * <MeetingProvider>.
- */
+/** Shares recognized signs across the meeting via VideoSDK pub/sub (recognition is local-only). */
 export function useSharedCaptions(
   localLatest: TranscriptEntry | null,
   selfId: string | undefined,

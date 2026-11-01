@@ -63,8 +63,7 @@ async def recognition_socket(websocket: WebSocket) -> None:
     was_signing = False
     print("Client connected.")
 
-    # A receiver task keeps only the newest frame; the processor always works on it and
-    # drops anything that piled up, so latency stays bounded (no backlog) over a slow link.
+    # Receiver keeps only the newest frame so latency stays bounded over a slow link.
     state: dict = {"latest": None, "seq": 0, "disconnected": False}
 
     async def receiver() -> None:

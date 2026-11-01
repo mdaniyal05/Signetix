@@ -5,12 +5,7 @@ import { useAuth } from "@/auth/AuthContext";
 import { useSocket } from "@/realtime/SocketContext";
 import { chatKeys } from "@/hooks/useChats";
 
-/**
- * Subscribes to the backend's `chat-activity` relay and refetches the affected
- * chat the instant a message is sent/edited/deleted/pinned by someone else.
- * Mounted once in the app shell. REST stays the source of truth; this is the
- * real-time "refetch now" signal that replaces waiting for the poll.
- */
+/** Refetches a chat instantly when the backend's chat-activity relay fires (mounted once). */
 export function useChatRealtime(): void {
   const { socket } = useSocket();
   const { session } = useAuth();

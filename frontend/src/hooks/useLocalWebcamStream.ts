@@ -1,11 +1,7 @@
 import { useMemo } from "react";
 import { useMeeting, useParticipant } from "@videosdk.live/react-sdk";
 
-/**
- * Returns a MediaStream for the local participant's webcam (or null when the
- * camera is off). Reuses the track VideoSDK already captured so we don't open
- * the camera a second time for recognition.
- */
+/** Local webcam MediaStream (or null), reusing the track VideoSDK already captured. */
 export function useLocalWebcamStream(): MediaStream | null {
   const { localParticipant } = useMeeting();
   const { webcamStream, webcamOn } = useParticipant(localParticipant?.id ?? "");

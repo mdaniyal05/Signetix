@@ -6,12 +6,7 @@ import { chatKeys } from "@/hooks/useChats";
 import { useSocket } from "@/realtime/SocketContext";
 import type { ReactionType } from "@/types/api";
 
-/**
- * Message mutations for an open chat. All go over REST (the source of truth) and
- * invalidate the chat history + list. After each change we emit a `chat-activity`
- * relay so the other participants refetch instantly (real-time push); polling
- * remains only as a fallback.
- */
+/** Message mutations for a chat (REST); emits chat-activity so recipients refetch instantly. */
 export function useMessageActions(
   phoneNumber: string,
   chatId: string,

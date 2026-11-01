@@ -1,12 +1,4 @@
-/**
- * Core HTTP client for the Signetix REST API.
- *
- * - Attaches the bearer access token.
- * - On a 401 "ACCESS_TOKEN_EXPIRED", refreshes once via /jwt/refresh and retries
- *   the original request (refreshes are de-duped behind a single promise).
- * - On refresh failure, clears the session and notifies listeners (so the auth
- *   context can redirect to login).
- */
+/** HTTP client for the REST API: attaches the bearer token, refreshes once on 401 and retries. */
 import { API_BASE_URL } from "@/config/env";
 import { clearSession, getSession, updateSession } from "@/auth/auth-storage";
 

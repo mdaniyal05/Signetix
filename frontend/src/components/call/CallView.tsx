@@ -80,11 +80,7 @@ export function CallView({ meetingId, onLeave }: CallViewProps) {
   // When join() last actually fired, to debounce rapid re-calls.
   const lastJoinAtRef = useRef(0);
 
-  // Join, retrying only if join() silently no-ops before the SDK socket is ready. Each
-  // join() gets a fresh server-assigned id, so firing it twice while an attempt is still
-  // connecting spawns a GHOST of you in the grid. safeJoin() debounces calls (2.5s): it
-  // absorbs StrictMode's double-invoke and lets a normal connect (1-3s) finish before any
-  // retry fires, while still recovering a genuine no-op. Stops once connected.
+  // Debounced join; avoids spawning a duplicate "ghost" participant.
   useEffect(() => {
     const secondsLeft = tokenSecondsLeft(VIDEOSDK_TOKEN);
     if (secondsLeft !== null && secondsLeft <= 0) {
@@ -132,9 +128,7 @@ export function CallView({ meetingId, onLeave }: CallViewProps) {
     return () => window.clearTimeout(timer);
   }, [joined, joinError, meetingId]);
 
-  // One unique tile per present participant; your own tile first. VideoSDK's
-  // `participants` map excludes the local user and drops anyone who leaves, so the
-  // grid self-updates on join/leave.
+  // One tile per participant, yours first; VideoSDK's map excludes the local user.
   const participantIds = useMemo(() => {
     const ids = new Set<string>();
     if (localParticipant?.id) ids.add(localParticipant.id);
@@ -148,8 +142,7 @@ export function CallView({ meetingId, onLeave }: CallViewProps) {
     enabled: recognitionOn && localWebcamOn,
   });
 
-  // Broadcast my signs to the meeting and receive the others', so each side sees
-  // what the other is signing (recognition itself only reads the local camera).
+  // Broadcast my signs and receive others' (recognition reads only the local camera).
   const shared = useSharedCaptions(recognition.latest, localParticipant?.id);
 
   // Merge my transcript ("You") with the remote participants', oldest first.
@@ -178,8 +171,7 @@ export function CallView({ meetingId, onLeave }: CallViewProps) {
     return mine ?? theirs;
   }, [recognition.latest, shared.remoteLatest]);
 
-  // Speak only the OTHER person's signs (you read your own on-screen; avoids the mic
-  // echoing your device's own speech back into the call).
+  // Speak only others' signs (avoids the mic echoing your device's own speech).
   useSignSpeech(shared.remoteLatest, speechOn && recognitionOn, language);
 
   if (joinError) {
@@ -218,9 +210,7 @@ export function CallView({ meetingId, onLeave }: CallViewProps) {
       <div className="grid items-stretch gap-4 lg:grid-cols-[1fr_320px]">
         <ParticipantGrid participantIds={participantIds} />
 
-        {/* Matches the grid's height: fills it via an overlay on lg (so a long
-            transcript scrolls inside instead of stretching the row), fixed height
-            when stacked on mobile. */}
+        {/* Fills the grid height on lg (transcript scrolls inside); fixed height on mobile. */}
         <div className="relative h-[50vh] min-h-0 lg:h-auto">
           <div className="inset-0 h-full lg:absolute">
             <TranscriptPanel

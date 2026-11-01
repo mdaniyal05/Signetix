@@ -23,14 +23,7 @@ interface UsePslRecognitionOptions {
   frameWidth?: number;
 }
 
-/**
- * Streams downscaled webcam frames to the Python inference server over a
- * WebSocket and exposes the recognition state (connection, signing status,
- * latest word, running transcript).
- *
- * The heavy/pure logic lives in `recognition-state.ts`; this hook only wires up
- * the WebSocket, a hidden <video>/<canvas>, and a sampling interval.
- */
+/** Streams webcam frames to the Python inference server (WS) and exposes recognition state. */
 export function usePslRecognition({
   stream,
   enabled = true,

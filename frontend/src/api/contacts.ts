@@ -7,10 +7,7 @@ export const contactsApi = {
   listByPhone: (phoneNumber: string) =>
     api.get<Contact[]>(`/contacts/${enc(phoneNumber)}`),
 
-  /**
-   * Replace the user's contact set with `contacts` (the backend diffs and
-   * adds/removes to match). To add one, send the full desired list.
-   */
+  /** Replace the user's contact set; the backend diffs to add/remove (send the full desired list). */
   setContacts: (userPhoneNumber: string, contacts: string[]) =>
     api.post<{ message: string; added: number; removed: number }>(
       "/contacts/create",

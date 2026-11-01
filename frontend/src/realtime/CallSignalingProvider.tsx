@@ -44,11 +44,7 @@ const CallSignalingContext = createContext<CallSignalingValue>({
   startCall: async () => undefined,
 });
 
-/**
- * Handles call ring signaling over Socket.io: places outgoing calls
- * (`meeting-id`) and surfaces incoming offers (`meeting-id-offer`) as a dialog
- * the user can accept or decline. Must be inside the router + socket + auth.
- */
+/** Call ring signaling over Socket.io: places outgoing calls and shows incoming offers as a dialog. */
 export function CallSignalingProvider({ children }: { children: ReactNode }) {
   const { socket } = useSocket();
   const { session } = useAuth();

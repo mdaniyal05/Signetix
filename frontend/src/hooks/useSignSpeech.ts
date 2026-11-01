@@ -8,15 +8,10 @@ import type { TranscriptEntry } from "@/types/recognition";
 export const speechSupported = (): boolean =>
   typeof window !== "undefined" && "speechSynthesis" in window;
 
-/**
- * Speaks each newly predicted sign out loud (Web Speech API). Tracks the last
- * spoken entry id so a word is read exactly once, and never replays the backlog
- * when speech is toggled on. No-ops when disabled or unsupported.
- */
-/** Ignore a repeat of the same word within this window (coalesces duplicate
- *  predictions / a sign split into two so it's spoken once). */
+// Ignore a repeat of the same word within this window (coalesces duplicates).
 const SAME_WORD_COOLDOWN_MS = 1500;
 
+/** Speaks each newly predicted sign once (Web Speech API); no-op if disabled/unsupported. */
 export function useSignSpeech(
   latest: TranscriptEntry | null,
   enabled: boolean,
@@ -64,8 +59,7 @@ export function useSignSpeech(
     let lang = speechLangFor(language);
     let voice = findVoice(lang.split("-")[0]);
 
-    // Many browsers have no Urdu voice → speaking ur-PK is silent. Fall back to
-    // the English label with an English voice so the sign is still read aloud.
+    // No Urdu voice in many browsers → fall back to the English label/voice.
     if (!voice && language === "Urdu") {
       text = signLabel(latest.word, "English");
       lang = "en-US";

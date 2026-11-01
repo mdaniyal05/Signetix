@@ -226,8 +226,7 @@ class StreamingSignRecognizer:
             return None
 
         finalized_at = timestamps[-1]
-        # Drop a back-to-back repeat of the same word (a split compound sign) so it
-        # captions once rather than spamming.
+        # Drop a back-to-back repeat of the same word (a split compound sign).
         if (word == self._last_emitted_word
                 and finalized_at - self._last_emitted_ts < config.INFERENCE_DUP_SUPPRESS_SEC):
             self._last_emitted_ts = finalized_at
