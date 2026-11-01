@@ -110,9 +110,9 @@ INFERENCE_SETTLE_ENABLE: bool = True
 # Per-frame wrist displacement (fraction of frame): above = moving, below = still.
 INFERENCE_MOVING_THRESHOLD: float = 0.025
 INFERENCE_SETTLE_THRESHOLD: float = 0.012
-# How long the hands must stay still (after having moved) before finalizing. Higher = more
-# delay before the caption; 1.1 felt unresponsive live, so kept at 0.8.
-INFERENCE_SETTLE_DURATION_SEC: float = 0.8
+# Still-time before finalizing while the hand stays in frame (the main fragmenter: too low cuts
+# a multi-movement sign at an internal pause). Dropping the hand still finalizes fast via rest gap.
+INFERENCE_SETTLE_DURATION_SEC: float = 1.2
 # Collapse a repeat of the same word finalized within this window, so a compound sign that
 # still splits into back-to-back finalizes is captioned once instead of spamming the word.
 INFERENCE_DUP_SUPPRESS_SEC: float = 1.5
