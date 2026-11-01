@@ -96,8 +96,8 @@ INFERENCE_MIN_SIGN_FRAMES: int = 4
 # Inference-only minimum span duration (separate from training's MIN_SIGN_DURATION_SEC).
 INFERENCE_MIN_SIGN_DURATION_SEC: float = 0.4
 # Log top-3 softmax + span stats per finalized span to the server console, to tune the
-# thresholds from real live data. Enable with PSL_INFERENCE_DEBUG=1.
-INFERENCE_DEBUG_LOG: bool = os.environ.get("PSL_INFERENCE_DEBUG", "0") != "0"
+# thresholds from real live data. Currently ON; set PSL_INFERENCE_DEBUG=0 to silence.
+INFERENCE_DEBUG_LOG: bool = os.environ.get("PSL_INFERENCE_DEBUG", "1") != "0"
 # Finalize on motion-settle: once the hands have moved and then go still for
 # SETTLE_DURATION, the sign is treated as finished and the FULL span is classified at once
 # (so multi-movement signs run to completion, not cut short on a prefix). This fires sooner
